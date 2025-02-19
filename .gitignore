@@ -1,0 +1,6 @@
+.env
+*.json
+hero_images/
+legend_data/
+*.txt
+__pycache__/
