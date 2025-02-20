@@ -166,7 +166,7 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, server:str="g
                 await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
         except Exception as e:
             print(e)
-            await ctx.response.send_message('That player has played too few matches with {}.'.format(hero.capitalize()))
+            await ctx.followup.send('That player has played too few matches with {}.'.format(hero.capitalize()))
 
 
 @tree.command(name="trios", description="Analyse a player's recent performance with combinations of 3 heroes")
@@ -228,14 +228,17 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
     else:
         try:
             await ctx.response.defer()
-            image = create_legend_data_image_one_hero(hero_data_name_to_code[hero.lower()], darkmode)
-            with io.BytesIO() as image_binary:
-                image.save(image_binary, 'PNG')
-                image_binary.seek(0)
-                await ctx.followup.send('', file=discord.File(fp=image_binary, filename='image.png'))
+            image, success = create_legend_data_image_one_hero(hero_data_name_to_code[hero.lower()], darkmode)
+            if success:
+                with io.BytesIO() as image_binary:
+                    image.save(image_binary, 'PNG')
+                    image_binary.seek(0)
+                    await ctx.followup.send('', file=discord.File(fp=image_binary, filename='image.png'))
+            else:
+                await ctx.followup.send('Not enough games playerd with the hero.')
         except Exception as e:
             print(e)
-            await ctx.response.send_message('Not enough games playerd with the hero.')
+            await ctx.followup.send('Not enough games playerd with the hero.')
 
 @bot.event
 async def on_ready():
