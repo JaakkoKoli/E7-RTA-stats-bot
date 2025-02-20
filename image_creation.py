@@ -14,14 +14,15 @@ hero_data = init_hero_data_code_to_name()
 def n_lowest_winrates(counter:Counter, n:int):
     counter = dict(counter)
     for key in counter.keys():
-        counter[key] = 100 - counter[key]
+        counter[key] = 1 - counter[key]
     counter = Counter(counter)
     return counter.most_common(5)
 
 def get_predicted_winrate(picks:Counter, wins:Counter, wins_total:int, matches_total:int) -> Counter:
     winrate = {}
     for hero_code in picks.keys():
-        winrate[hero_code] = (wins[hero_code] + wins_total) / (picks[hero_code] + matches_total)
+        if hero_code != "total":
+            winrate[hero_code] = (wins[hero_code] + wins_total) / (picks[hero_code] + matches_total)
     return Counter(winrate)
 
 def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, int, int]:
@@ -42,11 +43,13 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, da
         print(response.text)
     allies_winrate = {}
     for hero_code in allies.keys():
-        allies_winrate[hero_code] = (allies_wins[hero_code] + sum(match_result_vector)) / (allies[hero_code] + len(match_result_vector))
+        if hero_code != "total":
+            allies_winrate[hero_code] = (allies_wins[hero_code] + sum(match_result_vector)) / (allies[hero_code] + len(match_result_vector))
     allies_winrate = Counter(allies_winrate)
     matchup_winrate = {}
     for hero_code in matchups.keys():
-        matchup_winrate[hero_code] = (matchups_wins[hero_code] + sum(match_result_vector)) / (matchups[hero_code] + len(match_result_vector))
+        if hero_code != "total":
+            matchup_winrate[hero_code] = (matchups_wins[hero_code] + sum(match_result_vector)) / (matchups[hero_code] + len(match_result_vector))
     matchup_winrate = Counter(matchup_winrate)
     
     fig, axes = plt.subplots(nrows=4, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [2, 1, 1, 1, 1, 1]})
@@ -131,12 +134,14 @@ def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> 
    
     matchup_winrate = {}
     for hero_code in matchups.keys():
-        matchup_winrate[hero_code] = (matchups_wins.get(hero_code, Counter([]))["total"] + sum(match_result_vector)) / (matchups.get(hero_code, Counter([]))["total"] + len(match_result_vector))
+        if hero_code != "total":
+            matchup_winrate[hero_code] = (matchups_wins.get(hero_code, Counter([]))["total"] + sum(match_result_vector)) / (matchups.get(hero_code, Counter([]))["total"] + len(match_result_vector))
     matchup_winrate = Counter(matchup_winrate)
     
     enemy_pick_winrate = {}
     for hero_code in enemy_picks.keys():
-        enemy_pick_winrate[hero_code] = (enemy_wins.get(hero_code, 0) + sum(match_result_vector)) / (enemy_picks.get(hero_code, 0) + len(match_result_vector))
+        if hero_code != "total":
+            enemy_pick_winrate[hero_code] = (enemy_wins.get(hero_code, 0) + sum(match_result_vector)) / (enemy_picks.get(hero_code, 0) + len(match_result_vector))
     enemy_pick_winrate = Counter(enemy_pick_winrate)
 
     fig, axes = plt.subplots(nrows=8, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [1.8, 1, 1, 1, 1, 1]})
@@ -277,7 +282,8 @@ def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> np.ndarr
         print(response.text)
     trios_winrate = {}
     for hero_code in trios_picks.keys():
-        trios_winrate[hero_code] = (trios_wins.get(hero_code, 0) + sum(match_result_vector)) / (trios_picks.get(hero_code, 0) + len(match_result_vector))
+        if hero_code != "total":
+            trios_winrate[hero_code] = (trios_wins.get(hero_code, 0) + sum(match_result_vector)) / (trios_picks.get(hero_code, 0) + len(match_result_vector))
     trios_winrate = Counter(trios_winrate)
     fig, axes = plt.subplots(nrows=10, ncols=5, figsize=(10, 10), gridspec_kw={'width_ratios': [1.5, 1.5, 1.5, 1.5, 1.5]})
     textcol = "#000000"
@@ -470,6 +476,140 @@ def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
             axes[7, i+1].imshow(icon)
             axes[0, i+1].text(0.6, -0.6, f"{round(100*presence[top_presence[i][0]]/(sum(picks.values())/5),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[7, i+1].transAxes, color=textcol)
         axes[7, i+1].axis('off')
+
+    buf = io.BytesIO()
+    fig.savefig(buf)
+    buf.seek(0)
+    plt.close('all')
+    return Image.open(buf)
+
+def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False) -> np.ndarray:
+    with open("legend_data/legend_data.json", "r") as json_file:
+        legend_data = json.load(json_file)
+
+    presence = Counter(legend_data["presence"])
+
+    picks = Counter(legend_data["picks"])
+    wins = Counter(legend_data["wins"])
+
+    early_picks = Counter(legend_data["early_picks"])
+    early_picks_wins = Counter(legend_data["early_picks_wins"])
+
+    third_picks = Counter(legend_data["third_picks"])
+    third_picks_wins = Counter(legend_data["third_picks_wins"])
+
+    late_picks = Counter(legend_data["late_picks"])
+    late_picks_wins = Counter(legend_data["late_picks_wins"])
+
+    prebans = Counter(legend_data["prebans"])
+    prebans_wins = Counter(legend_data["prebans_wins"])
+
+    first_picks = Counter(legend_data["first_picks"])
+    first_picks_wins = Counter(legend_data["first_picks_wins"])
+    
+    matches_n = int(sum(picks.values())/5)
+    wins_n = int(sum(wins.values())/5)
+    target_hero_name = hero_data[target_hero_code]
+    
+    fig, axes = plt.subplots(nrows=8, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [1.8, 1, 1, 1, 1, 1]})
+    fig.subplots_adjust(hspace=1)
+    fontsize_s = 16
+    fontsize_m = 24
+    textcol = "#000000"
+    if darkmode:
+        fig.set_facecolor("#313338")
+        textcol = "#ffffff"
+        
+    axes[0, 0].plot([0, 1], [0.17, 0.17], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+    axes[0, 0].plot([0, 1], [0.275, 0.275], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+    axes[0, 0].plot([0, 1], [0.375, 0.375], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+    axes[0, 0].plot([0, 1], [0.48, 0.48], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+    axes[0, 0].plot([0, 1], [0.585, 0.585], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+    axes[0, 0].plot([0, 1], [0.685, 0.685], color=textcol, lw=2,transform=gcf().transFigure, clip_on=False)
+
+
+    axes[0, 0].axis('off')
+    axes[0, 1].axis('off')
+    axes[0, 2].axis('off')
+    axes[0, 3].axis('off')
+    axes[0, 4].axis('off')
+    axes[0, 5].axis('off')
+    axes[0, 0].text(0.5+(max((15-len(target_hero_name))/10, 0)), 1.5, f"{target_hero_name}", fontsize=46, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    axes[0, 0].text(1.2, 0.6, "Legend data", fontsize=32, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    
+    
+    gs = gridspec.GridSpec(8, 6, figure=fig)
+    ax2 = fig.add_subplot(gs[0:2, 0:2])
+    ax = fig.add_subplot(gs[0:2, 2:7])
+    ax.axis("off")
+    ax2.axis("off")
+    
+    axes[1, 0].text(-0.5, 0.2, "Winrate", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[1, 0].axis('off')
+    for i in range(5):
+        axes[1, i+1].axis('off')
+    target_winrate = round(100*wins[target_hero_code]/picks[target_hero_code],1)
+    legend_winrate = round(100*wins_n/matches_n,1)
+    axes[1, 1].text(0.1, 0.4, f"{target_winrate}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[1, 2].text(0.2, 0.4, f"({wins[target_hero_code]}-{picks[target_hero_code]})", fontsize=fontsize_s+2, ha='center', color=textcol)
+    if target_winrate>legend_winrate:
+        axes[1, 2].text(1.3, -0.3, f"{round(target_winrate-legend_winrate,1)}% higher than average legend winrate ({legend_winrate}%)", fontsize=fontsize_s, ha='center', color=textcol)
+    else:
+        axes[1, 2].text(1.3, -0.3, f"{round(legend_winrate-target_winrate,1)}% lower than average legend winrate ({legend_winrate}%)", fontsize=fontsize_s, ha='center', color=textcol)
+
+    axes[2, 0].text(-0.5, 0.2, "Pickrate", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[2, 0].axis('off')
+    for i in range(5):
+        axes[2, i+1].axis('off')
+    axes[2, 1].text(0.1, 0.4, f"{round(100*picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[2, 2].text(0.6, -0.3, f"Picked in {picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s, ha='center', color=textcol)
+
+    axes[3, 0].text(-0.5, 0.2, "Prebanrate", fontsize=fontsize_m+2, va='center',  color=textcol)
+    axes[3, 0].axis('off')
+    for i in range(5):
+        axes[3, i+1].axis('off')
+    axes[3, 1].text(0, 0.4, f"{round(100*prebans[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[3, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[3, 4].text(0, 0.4, f"Prebanned in {prebans[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[3, 1].text(1.0, -0.3, f"Preban winrate: {round(100*prebans_wins[target_hero_code]/prebans[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
+
+
+    axes[4, 0].text(-0.5, 0.2, "First pick", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[4, 0].axis('off')
+    for i in range(5):
+        axes[4, i+1].axis('off')
+    axes[4, 1].text(0, 0.4, f"{round(100*first_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[4, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[4, 4].text(0, 0.4, f"First picked in {first_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[4, 1].text(1.0, -0.3, f"First pick winrate: {round(100*first_picks_wins[target_hero_code]/first_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
+
+    axes[5, 0].text(-0.5, 0.2, "Early pick", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[5, 0].axis('off')
+    for i in range(5):
+        axes[5, i+1].axis('off')
+    axes[5, 1].text(0, 0.4, f"{round(100*early_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[5, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[5, 4].text(0, 0.4, f"Picked early in {early_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[5, 1].text(1.0, -0.3, f"Early pick winrate: {round(100*early_picks_wins[target_hero_code]/early_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
+
+    axes[6, 0].text(-0.5, 0.2, "Third pick", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[6, 0].axis('off')
+    for i in range(5):
+        axes[6, i+1].axis('off')
+    axes[6, 1].text(0, 0.4, f"{round(100*third_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[6, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[6, 4].text(0, 0.4, f"Picked third in {third_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[6, 1].text(1.0, -0.3, f"Third pick winrate: {round(100*third_picks_wins[target_hero_code]/third_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
+
+
+    axes[7, 0].text(-0.5, 0.2, "Late pick", fontsize=fontsize_m+2, va='center', color=textcol)
+    axes[7, 0].axis('off')
+    for i in range(5):
+        axes[7, i+1].axis('off')
+    axes[7, 1].text(0, 0.4, f"{round(100*late_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[7, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[7, 4].text(0, 0.4, f"Picked late in {late_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[7, 1].text(1.0, -0.3, f"Late pick winrate: {round(100*late_picks_wins[target_hero_code]/late_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
 
     buf = io.BytesIO()
     fig.savefig(buf)

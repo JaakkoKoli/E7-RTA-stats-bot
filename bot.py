@@ -7,7 +7,7 @@ from image_creation import *
 from functions import *
 from dotenv import load_dotenv
 import os
-a
+
 load_dotenv()
 
 if not os.path.exists("legend_data"):
@@ -213,6 +213,29 @@ async def legendstats(ctx:discord.Interaction, darkmode:str="on"):
                 await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
         except Exception as e:
             print(e)
+
+
+@tree.command(name="legendherostats", description="Show how a specific hero is performing in legend")
+@app_commands.autocomplete(darkmode=darkmode_autocomplete)
+@app_commands.autocomplete(hero=hero_autocomplete)
+async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="on"):
+    if darkmode == "off":
+        darkmode = False
+    else:
+        darkmode = True
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('Analyze deez nuts lmao')
+    else:
+        try:
+            await ctx.response.defer()
+            image = create_legend_data_image_one_hero(hero_data_name_to_code[hero.lower()], darkmode)
+            with io.BytesIO() as image_binary:
+                image.save(image_binary, 'PNG')
+                image_binary.seek(0)
+                await ctx.followup.send('', file=discord.File(fp=image_binary, filename='image.png'))
+        except Exception as e:
+            print(e)
+            await ctx.response.send_message('Not enough games playerd with the hero.')
 
 @bot.event
 async def on_ready():
