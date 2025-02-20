@@ -487,7 +487,6 @@ def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False)
     with open("legend_data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
 
-    
     picks = Counter(legend_data["picks"])
     wins = Counter(legend_data["wins"])
 
@@ -571,7 +570,7 @@ def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False)
     axes[2, 1].text(0.1, 0.4, f"{round(100*picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[2, 2].text(0.6, -0.3, f"Picked in {picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s, ha='center', color=textcol)
 
-    axes[3, 0].text(-0.5, 0.2, "Prebanrate", fontsize=fontsize_m+2, va='center',  color=textcol)
+    axes[3, 0].text(-0.5, 0.2, "Preban", fontsize=fontsize_m+2, va='center',  color=textcol)
     axes[3, 0].axis('off')
     for i in range(5):
         axes[3, i+1].axis('off')
