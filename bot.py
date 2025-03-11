@@ -193,6 +193,30 @@ async def trios(ctx:discord.Interaction, nickname:str, server:str="global", dark
         except Exception as e:
             print(e)
 
+@tree.command(name="bans", description="Analyse bans in the player's matches")
+@app_commands.autocomplete(darkmode=darkmode_autocomplete)
+@app_commands.autocomplete(server=server_autocomplete)
+async def bans(ctx:discord.Interaction, nickname:str, server:str="global", darkmode:str="on"):
+    if darkmode == "off":
+        darkmode = False
+    else:
+        darkmode = True
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('Ban deez nuts lmao')
+    else:
+        try:
+            await ctx.response.defer()
+            server = get_server_name(server)
+            user_id = get_id_by_username(nickname, get_user_dict(server))
+            image = create_ban_summary_image(user_id, server, darkmode)
+            with io.BytesIO() as image_binary:
+                image.save(image_binary, 'PNG')
+                image_binary.seek(0)
+                response_text = f'Ban data for {nickname.capitalize()} ({server})'
+                await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+        except Exception as e:
+            print(e)
+
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
 @tree.command(name="legendstats")
 async def legendstats(ctx:discord.Interaction, darkmode:str="on"):

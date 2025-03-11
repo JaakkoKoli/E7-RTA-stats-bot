@@ -636,3 +636,86 @@ def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False)
     buf.seek(0)
     plt.close('all')
     return Image.open(buf), True
+
+def create_ban_summary_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
+    response = get_match_data_by_user_id(user_id, server)
+    own_ban_counts = enemy_ban_counts = own_ban_win_counts = enemy_ban_win_counts = Counter([])
+    match_result_vector = []
+    matches = MatchHistory([])
+
+    if response.status_code == 200:
+        match_list = response.json()["result_body"]["battle_list"]
+        matches = MatchHistory([Match(match) for match in match_list])
+        own_ban_counts = matches.get_all_own_ban_counts()
+        enemy_ban_counts = matches.get_all_enemy_ban_counts()
+        own_ban_win_counts = matches.get_all_own_ban_win_counts()
+        enemy_ban_win_counts = matches.get_all_enemy_ban_win_counts()
+        match_result_vector = matches.get_match_result_vector()
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+
+    own_ban_winrate_counts = get_predicted_winrate(own_ban_counts, own_ban_win_counts, sum(match_result_vector), len(match_result_vector))
+    enemy_ban_winrate_counts = get_predicted_winrate(enemy_ban_counts, enemy_ban_win_counts, sum(match_result_vector), len(match_result_vector))
+
+    fig, axes = plt.subplots(nrows=4, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [2, 1, 1, 1, 1, 1]})
+    textcol = "#000000"
+    if darkmode:
+        fig.set_facecolor("#313338")
+        textcol = "#ffffff"
+    fontsize_s = 18
+
+    axes[0, 0].text(1.0, 1.2, f"Ban data", fontsize=40, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    axes[0, 0].text(-0.5, 0.4, "Best performance", fontsize=22, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    axes[0, 0].text(-0.5, 0.1, "Own hero banned", fontsize=18, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    axes[0, 0].axis('off')
+    best_own_bans = own_ban_winrate_counts.most_common(5)
+    for i in range(5):
+        if i<len(best_own_bans):
+            icon = get_hero_img(best_own_bans[i][0])
+            axes[0, i+1].imshow(icon)
+            axes[0, i+1].text(0.5, -0.4, f"{own_ban_win_counts[best_own_bans[i][0]]} - {own_ban_counts[best_own_bans[i][0]] - own_ban_win_counts[best_own_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.5, -0.7, f"{round(100*own_ban_win_counts[best_own_bans[i][0]]/own_ban_counts[best_own_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
+        axes[0, i+1].axis('off')
+    
+    axes[1, 0].text(-0.5, 0.4, "Worst performance", fontsize=22, va='center', transform=axes[1, 0].transAxes, color=textcol)
+    axes[1, 0].text(-0.5, 0.1, "Own hero banned", fontsize=18, va='center', transform=axes[1, 0].transAxes, color=textcol)
+    axes[1, 0].axis('off')
+    worst_own_bans = n_lowest_winrates(own_ban_winrate_counts, 5)
+    for i in range(5):
+        if i<len(worst_own_bans):
+            icon = get_hero_img(worst_own_bans[i][0])
+            axes[1, i+1].imshow(icon)
+            axes[1, i+1].text(0.5, -0.4, f"{own_ban_win_counts[worst_own_bans[i][0]]} - {own_ban_counts[worst_own_bans[i][0]] - own_ban_win_counts[worst_own_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
+            axes[1, i+1].text(0.5, -0.7, f"{round(100*own_ban_win_counts[worst_own_bans[i][0]]/own_ban_counts[worst_own_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
+        axes[1, i+1].axis('off')
+
+    axes[2, 0].text(-0.5, 0.4, "Best performance", fontsize=22, va='center', transform=axes[2, 0].transAxes, color=textcol)
+    axes[2, 0].text(-0.5, 0.1, "Enemy hero banned", fontsize=18, va='center', transform=axes[2, 0].transAxes, color=textcol)
+    axes[2, 0].axis('off')
+    best_enemy_bans = enemy_ban_winrate_counts.most_common(5)
+    for i in range(5):
+        if i<len(best_enemy_bans):
+            icon = get_hero_img(best_enemy_bans[i][0])
+            axes[2, i+1].imshow(icon)
+            axes[2, i+1].text(0.5, -0.4, f"{enemy_ban_win_counts[best_enemy_bans[i][0]]} - {enemy_ban_counts[best_enemy_bans[i][0]] - enemy_ban_win_counts[best_enemy_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
+            axes[2, i+1].text(0.5, -0.7, f"{round(100*enemy_ban_win_counts[best_enemy_bans[i][0]]/enemy_ban_counts[best_enemy_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
+        axes[2, i+1].axis('off')
+
+    axes[3, 0].text(-0.5, 0.4, "Worst performace", fontsize=22, va='center', transform=axes[3, 0].transAxes, color=textcol)
+    axes[3, 0].text(-0.5, 0.1, "Enemy hero banned", fontsize=18, va='center', transform=axes[3, 0].transAxes, color=textcol)
+    axes[3, 0].axis('off')
+    worst_enemy_bans = n_lowest_winrates(enemy_ban_winrate_counts, 5)
+    for i in range(5):
+        if i<len(worst_enemy_bans):
+            icon = get_hero_img(worst_enemy_bans[i][0])
+            axes[3, i+1].imshow(icon)
+            axes[3, i+1].text(0.5, -0.4, f"{enemy_ban_win_counts[worst_enemy_bans[i][0]]} - {enemy_ban_counts[worst_enemy_bans[i][0]] - enemy_ban_win_counts[worst_enemy_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
+            axes[3, i+1].text(0.5, -0.7, f"{round(100*enemy_ban_win_counts[worst_enemy_bans[i][0]]/enemy_ban_counts[worst_enemy_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
+        axes[3, i+1].axis('off')
+ 
+    buf = io.BytesIO()
+    fig.savefig(buf)
+    buf.seek(0)
+    plt.close('all')
+    return Image.open(buf)

@@ -50,6 +50,18 @@ class Match:
                 return pick.hero_code
         return ""
     
+    def get_own_ban(self) -> str:
+        for pick in self.picks_own:
+            if pick.ban:
+                return pick.hero_code
+        return ""
+    
+    def get_enemy_ban(self) -> str:
+        for pick in self.picks_enemy:
+            if pick.ban:
+                return pick.hero_code
+        return ""
+    
     def get_own_first_pick(self) -> str:
         for pick in self.picks_own:
             if pick.first_pick:
@@ -134,6 +146,38 @@ class MatchHistory:
                 mvps.append(mvp)
         return Counter(mvps)
     
+    def get_all_own_ban_counts(self) -> Counter:
+        bans = []
+        for match in self.matches:
+            ban = match.get_own_ban()
+            if ban != "":
+                bans.append(ban)
+        return Counter(bans)
+    
+    def get_all_enemy_ban_counts(self) -> Counter:
+        bans = []
+        for match in self.matches:
+            ban = match.get_enemy_ban()
+            if ban != "":
+                bans.append(ban)
+        return Counter(bans)
+    
+    def get_all_own_ban_win_counts(self) -> Counter:
+        bans = []
+        for match in self.matches:
+            ban = match.get_own_ban()
+            if ban != "" and match.win:
+                bans.append(ban)
+        return Counter(bans)
+    
+    def get_all_enemy_ban_win_counts(self) -> Counter:
+        bans = []
+        for match in self.matches:
+            ban = match.get_enemy_ban()
+            if ban != "" and match.win:
+                bans.append(ban)
+        return Counter(bans)
+    
     def get_all_own_first_pick_counts(self) -> Counter:
         first_picks = []
         for match in self.matches:
@@ -199,6 +243,18 @@ class MatchHistory:
         for key in allies.keys():
             allies[key] = Counter(allies[key])
         return allies
+    
+    def get_own_ban_vector(self) -> list[int]:
+        bans = [0]*len(self.matches)
+        for i, match in enumerate(self.matches):
+            bans[i] = int(match.get_own_ban()!= "")
+        return bans
+    
+    def get_enemy_ban_vector(self) -> list[int]:
+        bans = [0]*len(self.matches)
+        for i, match in enumerate(self.matches):
+            bans[i] = int(match.get_enemy_ban()!= "")
+        return bans
     
     def get_first_pick_vector(self) -> list[int]:
         first_picks = [0]*len(self.matches)
