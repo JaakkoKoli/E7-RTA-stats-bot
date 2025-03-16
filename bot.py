@@ -117,11 +117,11 @@ async def shitpost(ctx:discord.Interaction):
 async def name_autocomplete(ctx:discord.Interaction, current:str):
     data = []
     history = search_history.get_user_history(ctx.user.id)
-    users = user_data.find_user(current)
-    if len(current) < 3:
+    if len(current) == 0:
         for entry in history:
             data.append(app_commands.Choice(name=entry, value=entry))
     else:
+        users = user_data.find_user(current)
         if len(users) != 0:
             best_indices = np.flip(np.argsort([user.points + user.level + 9000*sum([user == entry for entry in history]) for user in users]))
             i = 0
