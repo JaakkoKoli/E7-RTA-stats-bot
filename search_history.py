@@ -15,7 +15,7 @@ class SearchHistory:
             if len(history) < 3:
                 self.history[user_id] = [search_query] + history
             else:
-                self.history[user_id] = [search_query] + history[1:]
+                self.history[user_id] = [search_query] + history[:2]
     
     def save_search_history(self) -> None:
         with open("data/search_history.json", "w") as json_file:
