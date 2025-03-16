@@ -9,7 +9,7 @@ def get_new_userdata(server:str) -> None:
         f"https://static.smilegatemegaport.com/gameRecord/epic7/epic7_user_world_{server}.json"
     )
     if response.status_code == 200:
-        with open(f"epic7_user_world_{server}.json", "w") as file:
+        with open(f"data/epic7_user_world_{server}.json", "w") as file:
             json.dump(response.json(), file)
         print(f"File saved successfully as epic7_user_world_{server}.json")
     else:
@@ -36,7 +36,7 @@ def get_new_heroname_json() -> None:
         "http://static.smilegatemegaport.com/gameRecord/epic7/epic7_hero.json"
     )
     if response.status_code == 200:
-        with open("heronames.json", "w") as file:
+        with open("data/heronames.json", "w") as file:
             json.dump(response.json()["en"], file)
         print(f"File saved successfully as heroname.json")
     else:
@@ -44,7 +44,7 @@ def get_new_heroname_json() -> None:
 
 
 def get_herocodes() -> list[str]:
-    heroname_df = pd.read_json("heronames.json")
+    heroname_df = pd.read_json("data/heronames.json")
     herocodes = []
 
     for x in range(len(heroname_df)):
@@ -100,7 +100,7 @@ def clean(string:str) -> str:
     return string.replace("'","").replace("[","").replace("]","")
 
 def init_hero_data_code_to_name() -> dict:
-    heroname_df = pd.read_json("heronames.json")
+    heroname_df = pd.read_json("data/heronames.json")
     heronames = dict()
 
     for x in range(len(heroname_df)):
@@ -110,7 +110,7 @@ def init_hero_data_code_to_name() -> dict:
 
 
 def init_hero_data_name_to_code() -> dict:
-    heroname_df = pd.read_json("heronames.json")
+    heroname_df = pd.read_json("data/heronames.json")
     heronames = dict()
 
     for x in range(len(heroname_df)):
@@ -148,7 +148,7 @@ def get_match_data_by_user_id(user_id:str, server:str) -> requests.Response:
 
 
 def create_dict_with_nickNo_key_by_server(server:str="global") -> dict:
-    fileName = "epic7_user_world_{}.json".format(server)
+    fileName = "data/epic7_user_world_{}.json".format(server)
     uid_df = pd.read_json(fileName)
     users = dict()
     for x in range(len(uid_df)):
@@ -159,7 +159,7 @@ def create_dict_with_nickNo_key_by_server(server:str="global") -> dict:
 
 
 def create_dict_with_nickName_key_by_server(server:str="global", min_rank:int=60) -> dict:
-    filename = "epic7_user_world_{}.json".format(server)
+    filename = "data/epic7_user_world_{}.json".format(server)
     uid_df = pd.read_json(filename)
     users = dict()
     for x in range(len(uid_df)):

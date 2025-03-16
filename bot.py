@@ -1,20 +1,25 @@
+from dotenv import load_dotenv
+import os
+from update_data import *
 import discord
 import random
 from discord import app_commands
 from discord.ext import commands
 import io
-from image_creation import *
 from functions import *
-from dotenv import load_dotenv
-import os
+from user_data import *
+from search_history import *
 
 load_dotenv()
 
-if not os.path.exists("legend_data"):
-    os.makedirs("legend_data") 
+if not os.path.exists("data"):
+    os.makedirs("data") 
 if not os.path.exists("hero_images"):
     os.makedirs("hero_images")   
-
+if not os.path.isfile("data/points.json"):
+    with open("data/points.json", "w") as json_file:
+            json.dump({}, json_file, indent=4)
+    
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
@@ -23,6 +28,35 @@ TOKEN = os.getenv('TOKEN')
 PREFIX = '!!'
 
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+
+# Update hero data, check if new image(s) need to be downloaded
+get_new_heroname_json()
+herocodes = get_herocodes()
+
+current_hero_image_codes = [f.split(".")[0] for f in os.listdir("hero_images") if os.path.isfile(os.path.join("hero_images", f))]
+
+for herocode in herocodes:
+    if herocode not in current_hero_image_codes:
+        image_url = 'https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png'.format(herocode)
+        save_image_from_url(image_url, 'hero_images/{}.png'.format(herocode))
+
+
+# Load and update user data, and create a search index
+user_data = UserData()
+points = Points()
+points.load_points()
+server_list = ["global", "asia", "jpn", "kor", "eu"]
+for server in server_list:
+    get_new_userdata(server)
+    with open(f"data/epic7_user_world_{server}.json", "r") as json_file:
+        server_user_data = json.load(json_file)
+        user_data.read_data(server_user_data, server)
+user_data.create_search_index()
+user_data.load_points(points.points)
+# Initiate search history and load if previous data exists
+search_history = SearchHistory()
+if os.path.exists("data/search_history.json"):
+    search_history.load_search_history()
 
 global_user_dict = create_dict_with_nickName_key_by_server("global")
 asia_user_dict = create_dict_with_nickName_key_by_server("asia")
@@ -64,6 +98,8 @@ def get_user_dict(server):
 # COMMANDS #
 ############
 
+from image_creation import *
+
 @tree.command(name="shitpost")
 async def shitpost(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
@@ -76,6 +112,27 @@ async def shitpost(ctx:discord.Interaction):
                           "Switch to Caerliss's profile card, free wins late in season"]]
         response = random.choice(shitpost_list)
         await ctx.response.send_message(response)
+        
+        
+async def name_autocomplete(ctx:discord.Interaction, current:str):
+    data = []
+    history = search_history.get_user_history(ctx.user.id)
+    users = user_data.find_user(current)
+    if len(current) < 3:
+        for entry in history:
+            data.append(app_commands.Choice(name=entry, value=entry))
+    else:
+        if len(users) != 0:
+            best_indices = np.flip(np.argsort([user.points + user.level + 9000*sum([user == entry for entry in history]) for user in users]))
+            i = 0
+            while len(data) < 3 and i < len(best_indices):
+                user_string = users[best_indices[i]].get_name_with_server()
+                data.append(app_commands.Choice(name=user_string, value=user_string))
+                i += 1
+        else:
+            for entry in history:
+                data.append(app_commands.Choice(name=entry, value=entry))
+    return data
 
 async def darkmode_autocomplete(ctx:discord.Interaction, current:str):
     return [app_commands.Choice(name="on", value="on"), app_commands.Choice(name="off", value="off")]
@@ -86,29 +143,37 @@ async def server_autocomplete(ctx:discord.Interaction, current:str):
 @tree.command(name="scout", description="Gives information about the player's matches.")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
 @app_commands.autocomplete(server=server_autocomplete)
+@app_commands.autocomplete(nickname=name_autocomplete)
 async def scout(ctx:discord.Interaction, nickname:str, server:str="global", darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
         darkmode = True
-    server = get_server_name(server)
-    user_id = get_id_by_username(nickname, get_user_dict(server))
+
+    user_name_and_server = nickname.rsplit("#", 1)
+    user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('Just dm them for the free win, you should know how to do that right?')
     else:
-        if user_id is not None:
+        if user is not None:
             try:
                 await ctx.response.defer()
-                image, matches = create_match_summary_image(user_id, server, darkmode)
+                image, matches = create_match_summary_image(user.id, user.server, darkmode)
                 match_result_vector = matches.get_match_result_vector()
                 first_pick_vector = matches.get_first_pick_vector()
                 first_pick_wins_vector = matches.get_first_pick_wins_vector()
+                
+                points.points[str(user.id)] = int(matches.matches[0].points)
+                user.points = int(matches.matches[0].points)
+                points.save_points()
+                search_history.add_search_query(ctx.user.id, nickname)
+                search_history.save_search_history()
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')
                     image_binary.seek(0)
                     
                     response_text = f"""
-                    Scouting info for **{nickname.capitalize()} ({server})**
+                    Scouting info for **{user.name.capitalize()} ({user.server})**
                     
                     Overall winrate: {round(100.0*sum(match_result_vector)/len(match_result_vector))}%
                     First pick winrate: {round(100.0*sum(first_pick_wins_vector)/sum(first_pick_vector))}%
@@ -133,6 +198,9 @@ async def find(ctx:discord.Interaction, query:str, server:str="global"):
             await ctx.response.send_message('Player names in {server} server that contain **{}**: {}.'.format(query, clean(str(matches))))
         else:
             await ctx.response.send_message('No users found')
+
+
+
 
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):

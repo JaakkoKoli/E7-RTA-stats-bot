@@ -1,10 +1,6 @@
 import requests
 import pandas as pd
 import json
-import os
-
-if not os.path.exists("hero_images"):
-    os.makedirs("hero_images")   
 
 def save_image_from_url(url:str, file_path:str) -> None:
     response = requests.get(url)
@@ -18,7 +14,7 @@ def save_image_from_url(url:str, file_path:str) -> None:
 def get_new_heroname_json() -> None:
     response = requests.get("http://static.smilegatemegaport.com/gameRecord/epic7/epic7_hero.json")
     if response.status_code == 200:
-        with open("heronames.json", 'w') as file:
+        with open("data/heronames.json", 'w') as file:
             json.dump(response.json()["en"], file)
         print(f"File saved successfully as heroname.json")
     else:
@@ -33,11 +29,11 @@ def get_herocodes() -> list[str]:
         herocodes.append([heroname_df.iloc[x]["code"]][0])
     return herocodes
 
-get_new_heroname_json()
-
-herocodes = get_herocodes()
-
-for i, herocode in enumerate(herocodes):
-    image_url = 'https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png'.format(herocode)
-    save_image_from_url(image_url, 'hero_images/{}.png'.format(herocode))
-    print("{}/{}".format(i, len(herocodes)))
+def get_new_userdata(server:str) -> None:
+    response = requests.get(f"https://static.smilegatemegaport.com/gameRecord/epic7/epic7_user_world_{server}.json")
+    if response.status_code == 200:
+        with open(f"data/epic7_user_world_{server}.json", 'w') as file:
+            json.dump(response.json(), file)
+        print(f"File saved successfully as epic7_user_world_{server}.json")
+    else:
+        print("Failed to download file")

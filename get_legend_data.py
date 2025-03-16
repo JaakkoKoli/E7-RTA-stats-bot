@@ -1,5 +1,5 @@
 import requests
-from data_reading import *
+from match_data import *
 import json
 import os
 
@@ -23,8 +23,8 @@ def get_legend_players() -> tuple[list[int], list[str]]:
             user_servers += [player_data["world_code"].replace("world_","")]
     return user_ids, user_servers
         
-if not os.path.exists("legend_data"):
-    os.makedirs("legend_data")        
+if not os.path.exists("data"):
+    os.makedirs("data")        
 
 legend_player_ids, legend_player_servers = get_legend_players()
 
@@ -69,5 +69,5 @@ legend_data = {"presence": presence,
                "first_picks": first_picks,
                "first_picks_wins": first_picks_wins}
 
-with open("legend_data/legend_data.json", "w") as json_file:
+with open("data/legend_data.json", "w") as json_file:
     json.dump(legend_data, json_file, indent=4)

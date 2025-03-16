@@ -6,7 +6,7 @@ import io
 import matplotlib.gridspec as gridspec
 import math
 from functions import *
-from data_reading import *
+from match_data import *
 import json
 
 hero_data = init_hero_data_code_to_name()
@@ -346,7 +346,7 @@ def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> np.ndarr
     return Image.open(buf)
 
 def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
-    with open("legend_data/legend_data.json", "r") as json_file:
+    with open("data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
 
     presence = Counter(legend_data["presence"])
@@ -484,7 +484,7 @@ def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
     return Image.open(buf)
 
 def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, bool]:
-    with open("legend_data/legend_data.json", "r") as json_file:
+    with open("data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
 
     picks = Counter(legend_data["picks"])
