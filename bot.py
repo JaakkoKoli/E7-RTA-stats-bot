@@ -142,9 +142,8 @@ async def server_autocomplete(ctx:discord.Interaction, current:str):
 
 @tree.command(name="scout", description="Gives information about the player's matches.")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
-@app_commands.autocomplete(server=server_autocomplete)
 @app_commands.autocomplete(nickname=name_autocomplete)
-async def scout(ctx:discord.Interaction, nickname:str, server:str="global", darkmode:str="on"):
+async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
@@ -188,7 +187,9 @@ async def scout(ctx:discord.Interaction, nickname:str, server:str="global", dark
         else:
             await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
+
 @tree.command(name="find", description="Finds players with the given search query in their nickname")
+@app_commands.autocomplete(server=server_autocomplete)
 async def find(ctx:discord.Interaction, query:str, server:str="global"):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('**Searching.. Searching...** Sorry sir you do not have enough vBucks to complete this transaction!')
@@ -198,9 +199,6 @@ async def find(ctx:discord.Interaction, query:str, server:str="global"):
             await ctx.response.send_message('Player names in {server} server that contain **{}**: {}.'.format(query, clean(str(matches))))
         else:
             await ctx.response.send_message('No users found')
-
-
-
 
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
@@ -213,8 +211,8 @@ async def hero_autocomplete(ctx:discord.Interaction, current:str):
 @tree.command(name="analyse", description="Analyse a player's recent performance with a specific hero.")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
 @app_commands.autocomplete(hero=hero_autocomplete)
-@app_commands.autocomplete(server=server_autocomplete)
-async def analyze(ctx:discord.Interaction, nickname:str, hero:str, server:str="global", darkmode:str="on"):
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def analyze(ctx:discord.Interaction, nickname:str, hero:str, darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
@@ -222,15 +220,21 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, server:str="g
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('Analyze deez nuts lmao')
     else:
-        user_id = get_id_by_username(nickname, get_user_dict(server))
-        server = get_server_name(server)
+        user_name_and_server = nickname.rsplit("#", 1)
+        user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
         try:
             await ctx.response.defer()
-            image, picks, wins = create_hero_analysis_image(user_id, server, hero_data_name_to_code[hero.lower()], darkmode)
+            image, picks, wins, matches = create_hero_analysis_image(user.id, user.server, hero_data_name_to_code[hero.lower()], darkmode)
+            
+            points.points[str(user.id)] = int(matches.matches[0].points)
+            user.points = int(matches.matches[0].points)
+            points.save_points()
+            search_history.add_search_query(ctx.user.id, nickname)
+            search_history.save_search_history()
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
-                response_text = f'{nickname.capitalize()} ({server}) has played {picks} games with {hero.capitalize()} and has a {round(100*wins/picks)}% winrate with the hero.'
+                response_text = f'{user.name.capitalize()} ({user.server}) has played {picks} games with {hero.capitalize()} and has a {round(100*wins/picks)}% winrate with the hero.'
                 await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
         except Exception as e:
             print(e)
@@ -239,8 +243,8 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, server:str="g
 
 @tree.command(name="trios", description="Analyse a player's recent performance with combinations of 3 heroes")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
-@app_commands.autocomplete(server=server_autocomplete)
-async def trios(ctx:discord.Interaction, nickname:str, server:str="global", darkmode:str="on"):
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def trios(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
@@ -250,21 +254,27 @@ async def trios(ctx:discord.Interaction, nickname:str, server:str="global", dark
     else:
         try:
             await ctx.response.defer()
-            server = get_server_name(server)
-            user_id = get_id_by_username(nickname, get_user_dict(server))
-            image = create_trios_image(user_id, server, darkmode)
+            user_name_and_server = nickname.rsplit("#", 1)
+            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            image, matches = create_trios_image(user.id, user.server, darkmode)
+            
+            points.points[str(user.id)] = int(matches.matches[0].points)
+            user.points = int(matches.matches[0].points)
+            points.save_points()
+            search_history.add_search_query(ctx.user.id, nickname)
+            search_history.save_search_history()
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
-                response_text = f'Trios for {nickname.capitalize()} ({server})'
+                response_text = f'Trios for {user.name.capitalize()} ({user.server})'
                 await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
         except Exception as e:
             print(e)
 
 @tree.command(name="bans", description="Analyse bans in the player's matches")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
-@app_commands.autocomplete(server=server_autocomplete)
-async def bans(ctx:discord.Interaction, nickname:str, server:str="global", darkmode:str="on"):
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def bans(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
@@ -274,13 +284,19 @@ async def bans(ctx:discord.Interaction, nickname:str, server:str="global", darkm
     else:
         try:
             await ctx.response.defer()
-            server = get_server_name(server)
-            user_id = get_id_by_username(nickname, get_user_dict(server))
-            image = create_ban_summary_image(user_id, server, darkmode)
+            user_name_and_server = nickname.rsplit("#", 1)
+            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            image, matches = create_ban_summary_image(user.id, user.server, darkmode)
+            
+            points.points[str(user.id)] = int(matches.matches[0].points)
+            user.points = int(matches.matches[0].points)
+            points.save_points()
+            search_history.add_search_query(ctx.user.id, nickname)
+            search_history.save_search_history()
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
-                response_text = f'Ban data for {nickname.capitalize()} ({server})'
+                response_text = f'Ban data for {user.name.capitalize()} ({user.server})'
                 await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
         except Exception as e:
             print(e)

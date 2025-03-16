@@ -25,7 +25,7 @@ def get_predicted_winrate(picks:Counter, wins:Counter, wins_total:int, matches_t
             winrate[hero_code] = (wins[hero_code] + wins_total) / (picks[hero_code] + matches_total)
     return Counter(winrate)
 
-def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, int, int]:
+def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, int, int, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
     allies = allies_wins = matchups = matchups_wins = Counter([])
     match_result_vector = []
@@ -108,7 +108,7 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, da
     fig.savefig(buf)
     buf.seek(0)
     plt.close('all')
-    return Image.open(buf), matches.get_matchup_counts()[target_hero_code]["total"], matches.get_matchup_win_counts()[target_hero_code]["total"]
+    return Image.open(buf), matches.get_matchup_counts()[target_hero_code]["total"], matches.get_matchup_win_counts()[target_hero_code]["total"], matches
 
 def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
@@ -266,7 +266,7 @@ def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> 
     return Image.open(buf), matches
     
 
-def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> np.ndarray:
+def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
     trios_picks = trios_wins = Counter([])
     match_result_vector = []
@@ -343,7 +343,7 @@ def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> np.ndarr
     fig.savefig(buf)
     buf.seek(0)
     plt.close('all')
-    return Image.open(buf)
+    return Image.open(buf), matches
 
 def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
     with open("data/legend_data.json", "r") as json_file:
@@ -718,4 +718,4 @@ def create_ban_summary_image(user_id:str, server:str, darkmode:bool=False) -> tu
     fig.savefig(buf)
     buf.seek(0)
     plt.close('all')
-    return Image.open(buf)
+    return Image.open(buf), matches

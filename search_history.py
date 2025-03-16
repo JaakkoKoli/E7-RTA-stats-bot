@@ -11,10 +11,11 @@ class SearchHistory:
     def add_search_query(self, user_id:str, search_query:str) -> None:
         user_id = str(user_id)
         history = self.get_user_history(user_id)
-        if len(history) < 3:
-            self.history[user_id] = [search_query] + history
-        else:
-            self.history[user_id] = [search_query] + history[1:]
+        if search_query not in history:
+            if len(history) < 3:
+                self.history[user_id] = [search_query] + history
+            else:
+                self.history[user_id] = [search_query] + history[1:]
     
     def save_search_history(self) -> None:
         with open("data/search_history.json", "w") as json_file:
