@@ -188,18 +188,6 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
             await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
 
-@tree.command(name="find", description="Finds players with the given search query in their nickname")
-@app_commands.autocomplete(server=server_autocomplete)
-async def find(ctx:discord.Interaction, query:str, server:str="global"):
-    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
-        await ctx.response.send_message('**Searching.. Searching...** Sorry sir you do not have enough vBucks to complete this transaction!')
-    else:
-        matches = find_username(query, get_user_dict(server))
-        if len(matches) != 0:
-            await ctx.response.send_message('Player names in {server} server that contain **{}**: {}.'.format(query, clean(str(matches))))
-        else:
-            await ctx.response.send_message('No users found')
-
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
     data = []
