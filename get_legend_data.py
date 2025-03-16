@@ -3,6 +3,9 @@ from match_data import *
 import json
 import os
 
+if not os.path.exists("data"):
+    os.makedirs("data") 
+
 def get_legend_players() -> tuple[list[int], list[str]]:
     responses = []
     try:
