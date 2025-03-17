@@ -118,6 +118,8 @@ def create_match_summary_image(user_id:str, server:str, hero_data:HeroList, dark
     matches = MatchHistory([])
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
+        if len(match_list) <= 5:
+            return None, None  
         matches = MatchHistory([Match(match, hero_data) for match in match_list])
         picks = matches.get_all_own_pick_counts()
         wins = matches.get_all_own_pick_win_counts()
@@ -130,10 +132,7 @@ def create_match_summary_image(user_id:str, server:str, hero_data:HeroList, dark
         match_result_vector = matches.get_match_result_vector()
     else:
         print(f"Error: {response.status_code}")
-        print(response.text)
-    
-    if len(matches) <= 5:
-        return None, None    
+        print(response.text)  
     
     matchup_winrate = {}
     for hero_code in matchups.keys():
