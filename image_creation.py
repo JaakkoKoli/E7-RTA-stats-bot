@@ -8,8 +8,7 @@ import math
 from functions import *
 from match_data import *
 import json
-
-hero_data = init_hero_data_code_to_name()
+from hero_data import *
 
 def n_lowest_winrates(counter:Counter, n:int):
     counter = dict(counter)
@@ -25,14 +24,14 @@ def get_predicted_winrate(picks:Counter, wins:Counter, wins_total:int, matches_t
             winrate[hero_code] = (wins[hero_code] + wins_total) / (picks[hero_code] + matches_total)
     return Counter(winrate)
 
-def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, int, int, MatchHistory]:
+def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, hero_data:HeroList, darkmode:bool=False) -> tuple[np.ndarray, int, int, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
     allies = allies_wins = matchups = matchups_wins = Counter([])
     match_result_vector = []
     matches = MatchHistory([])
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
-        matches = MatchHistory([Match(match) for match in match_list])
+        matches = MatchHistory([Match(match, hero_data) for match in match_list])
         matchups = matches.get_matchup_counts()[target_hero_code]
         matchups_wins = matches.get_matchup_win_counts()[target_hero_code]
         allies = matches.get_ally_counts()[target_hero_code]
@@ -41,6 +40,8 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, da
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
+    if len(allies.keys()) == 0:
+        return None, None, None, None
     allies_winrate = {}
     for hero_code in allies.keys():
         if hero_code != "total":
@@ -59,7 +60,7 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, da
         textcol = "#ffffff"
     fontsize_s = 18
 
-    axes[0, 0].text(1.0, 1.2, f"{hero_data[target_hero_code]}", fontsize=40, va='center', transform=axes[0, 0].transAxes, color=textcol)
+    axes[0, 0].text(1.0, 1.2, f"{hero_data.get_hero_by_code(target_hero_code).name}", fontsize=40, va='center', transform=axes[0, 0].transAxes, color=textcol)
     axes[0, 0].text(-0.5, 0.5, "Best allies", fontsize=24, va='center', transform=axes[0, 0].transAxes, color=textcol)
     axes[0, 0].axis('off')
     best_allies = allies_winrate.most_common(5)
@@ -110,15 +111,14 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, da
     plt.close('all')
     return Image.open(buf), matches.get_matchup_counts()[target_hero_code]["total"], matches.get_matchup_win_counts()[target_hero_code]["total"], matches
 
-def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
+def create_match_summary_image(user_id:str, server:str, hero_data:HeroList, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
-
     picks = wins = enemy_picks = enemy_wins = prebans = first_picks = matchups = matchups_wins = Counter([])
     match_result_vector = []
     matches = MatchHistory([])
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
-        matches = MatchHistory([Match(match) for match in match_list])
+        matches = MatchHistory([Match(match, hero_data) for match in match_list])
         picks = matches.get_all_own_pick_counts()
         wins = matches.get_all_own_pick_win_counts()
         enemy_picks = matches.get_all_enemy_pick_counts()
@@ -131,7 +131,10 @@ def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> 
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
-   
+    
+    if len(matches) <= 5:
+        return None, None    
+    
     matchup_winrate = {}
     for hero_code in matchups.keys():
         if hero_code != "total":
@@ -266,14 +269,14 @@ def create_match_summary_image(user_id:str, server:str, darkmode:bool=False) -> 
     return Image.open(buf), matches
     
 
-def create_trios_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
+def create_trios_image(user_id:str, server:str, hero_data:HeroList, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
     trios_picks = trios_wins = Counter([])
     match_result_vector = []
     matches = MatchHistory([])
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
-        matches = MatchHistory([Match(match) for match in match_list])
+        matches = MatchHistory([Match(match, hero_data) for match in match_list])
         match_result_vector = matches.get_match_result_vector()
         trios_picks = matches.get_own_trios_picks()
         trios_wins = matches.get_own_trios_wins()
@@ -483,7 +486,7 @@ def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
     plt.close('all')
     return Image.open(buf)
 
-def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False) -> tuple[np.ndarray, bool]:
+def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str, darkmode:bool=False) -> tuple[np.ndarray, bool]:
     with open("data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
 
@@ -515,7 +518,6 @@ def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False)
     
     matches_n = int(sum(picks.values())/5)
     wins_n = int(sum(wins.values())/5)
-    target_hero_name = hero_data[target_hero_code]
     
     fig, axes = plt.subplots(nrows=8, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [1.8, 1, 1, 1, 1, 1]})
     fig.subplots_adjust(hspace=1)
@@ -637,7 +639,7 @@ def create_legend_data_image_one_hero(target_hero_code:str, darkmode:bool=False)
     plt.close('all')
     return Image.open(buf), True
 
-def create_ban_summary_image(user_id:str, server:str, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
+def create_ban_summary_image(user_id:str, server:str, hero_data:HeroList, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
     own_ban_counts = enemy_ban_counts = own_ban_win_counts = enemy_ban_win_counts = Counter([])
     match_result_vector = []
@@ -645,7 +647,7 @@ def create_ban_summary_image(user_id:str, server:str, darkmode:bool=False) -> tu
 
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
-        matches = MatchHistory([Match(match) for match in match_list])
+        matches = MatchHistory([Match(match, hero_data) for match in match_list])
         own_ban_counts = matches.get_all_own_ban_counts()
         enemy_ban_counts = matches.get_all_enemy_ban_counts()
         own_ban_win_counts = matches.get_all_own_ban_win_counts()

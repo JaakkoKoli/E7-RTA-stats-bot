@@ -2,6 +2,7 @@ import requests
 from match_data import *
 import json
 import os
+from functions import *
 
 if not os.path.exists("data"):
     os.makedirs("data") 

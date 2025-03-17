@@ -12,7 +12,7 @@ class User:
     def get_name_with_server(self, divider:str="#") -> str:
         return f"{self.name}{divider}{self.server}"
     
-    def get_data_as_dict(self):
+    def get_data_as_dict(self) -> dict:
         return {
             "id": self.id,
             "name": self.name,
@@ -75,10 +75,10 @@ class UserData:
                 return user
         return None
     
-    def get_user_ids_as_list(self):
+    def get_user_ids_as_list(self) -> list[int]:
         return [user.id for user in self.users]
     
-    def get_user_names_as_list(self):
+    def get_user_names_as_list(self) -> list[str]:
         return [user.name for user in self.users]
     
     def change_user_name_by_id(self, user_id:int, new_name:str) -> None:
@@ -95,10 +95,10 @@ class Points:
     def __init__(self):
         self.points:dict = {}
         
-    def load_points(self):
+    def load_points(self) -> None:
         with open("data/points.json", "r") as json_file:
             self.points = json.load(json_file)
             
-    def save_points(self):
+    def save_points(self) -> None:
         with open("data/points.json", "w") as json_file:
             json.dump(self.points, json_file, indent=4)

@@ -6,11 +6,12 @@ import random
 from discord import app_commands
 from discord.ext import commands
 import io
-from functions import *
+from functions import save_image_from_url
 from user_data import *
 from search_history import *
+from hero_data import *
 
-load_dotenv()
+# Check if required folder structure exists, create if not
 
 if not os.path.exists("data"):
     os.makedirs("data") 
@@ -18,24 +19,23 @@ if not os.path.exists("hero_images"):
     os.makedirs("hero_images")   
 if not os.path.isfile("data/points.json"):
     with open("data/points.json", "w") as json_file:
-            json.dump({}, json_file, indent=4)
-    
-intents = discord.Intents.default()
-client = discord.Client(intents=intents)
-tree = discord.app_commands.CommandTree(client)
+        json.dump({}, json_file, indent=4)
+  
 
-TOKEN = os.getenv('TOKEN')
-PREFIX = '!!'
-
-bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+# Load environmental variable(s)            
+load_dotenv()
 
 # Update hero data, check if new image(s) need to be downloaded
+hero_popularity = HeroPopularity()
+if os.path.isfile("data/hero_popularity.json"):
+    hero_popularity.load_popularity()
+
 get_new_heroname_json()
-herocodes = get_herocodes()
+with open("data/heronames.json", "r") as json_file:
+    hero_list = HeroList(json.load(json_file))
 
 current_hero_image_codes = [f.split(".")[0] for f in os.listdir("hero_images") if os.path.isfile(os.path.join("hero_images", f))]
-
-for herocode in herocodes:
+for herocode in hero_list.hero_code_list:
     if herocode not in current_hero_image_codes:
         image_url = 'https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png'.format(herocode)
         save_image_from_url(image_url, 'hero_images/{}.png'.format(herocode))
@@ -58,15 +58,7 @@ search_history = SearchHistory()
 if os.path.exists("data/search_history.json"):
     search_history.load_search_history()
 
-global_user_dict = create_dict_with_nickName_key_by_server("global")
-asia_user_dict = create_dict_with_nickName_key_by_server("asia")
-jpn_user_dict = create_dict_with_nickName_key_by_server("jpn")
-kor_user_dict = create_dict_with_nickName_key_by_server("kor")
-eu_user_dict = create_dict_with_nickName_key_by_server("eu")
-
-hero_data_name_to_code = init_hero_data_name_to_code()
-hero_data_code_to_name = init_hero_data_code_to_name()
-
+# Load banned users/discord servers
 poobrain_set = set()
 with open('poobrain.txt', 'r') as file:
     for line in file:
@@ -79,20 +71,16 @@ with open('pooguilds.txt', 'r') as file:
         values = line.strip().split(', ')
         pooguild_set.update(values)
 
-def get_user_dict(server):
-    server = get_server_name(server)
-    if server == "global":
-        return global_user_dict
-    elif server == "eu":
-        return eu_user_dict
-    elif server == "jpn":
-        return jpn_user_dict
-    elif server == "asia":
-        return asia_user_dict
-    elif server == "kor":
-        return kor_user_dict
-    else:
-        return None
+# Bot setup
+
+intents = discord.Intents.default()
+client = discord.Client(intents=intents)
+tree = discord.app_commands.CommandTree(client)
+
+TOKEN = os.getenv('TOKEN')
+PREFIX = '!!'
+
+bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 ############
 # COMMANDS #
@@ -105,11 +93,11 @@ async def shitpost(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('Just read your own message history')
     else:
-        shitpost_list = [[" In the digital universe of Epic Seven, Traptrix stands tall, embodying the essence of commitment with an astonishing 5000 games per season. Clad in the prestigious legend frame, their motto, no frame no opinion, speaks volumes, underscoring the significance and authority their seasoned expertise lends to the strategic discussions and decisions within the game. As an arbiter of insight and wisdom, Traptrix's every move echoes with the resonant power of their gameplay, a living testament to their dedication to this virtual realm.",
+        shitpost_list = [" In the digital universe of Epic Seven, Traptrix stands tall, embodying the essence of commitment with an astonishing 5000 games per season. Clad in the prestigious legend frame, their motto, no frame no opinion, speaks volumes, underscoring the significance and authority their seasoned expertise lends to the strategic discussions and decisions within the game. As an arbiter of insight and wisdom, Traptrix's every move echoes with the resonant power of their gameplay, a living testament to their dedication to this virtual realm.",
                           "You see that? it's called a legend frame, something you'll never have!", 
                           "Yield pls", 
                           "Idk what you want me to say dude it was his little sister's birthday so the boys surprised him with a frame if that's wintrading lock me tf up", 
-                          "Switch to Caerliss's profile card, free wins late in season"]]
+                          "Switch to Caerliss's profile card, free wins late in season"]
         response = random.choice(shitpost_list)
         await ctx.response.send_message(response)
         
@@ -157,29 +145,32 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         if user is not None:
             try:
                 await ctx.response.defer()
-                image, matches = create_match_summary_image(user.id, user.server, darkmode)
-                match_result_vector = matches.get_match_result_vector()
-                first_pick_vector = matches.get_first_pick_vector()
-                first_pick_wins_vector = matches.get_first_pick_wins_vector()
-                
-                points.points[str(user.id)] = int(matches.matches[0].points)
-                user.points = int(matches.matches[0].points)
-                points.save_points()
-                search_history.add_search_query(ctx.user.id, nickname)
-                search_history.save_search_history()
-                with io.BytesIO() as image_binary:
-                    image.save(image_binary, 'PNG')
-                    image_binary.seek(0)
+                image, matches = create_match_summary_image(user.id, user.server, hero_list, darkmode)
+                if image is not None:
+                    match_result_vector = matches.get_match_result_vector()
+                    first_pick_vector = matches.get_first_pick_vector()
+                    first_pick_wins_vector = matches.get_first_pick_wins_vector()
                     
-                    response_text = f"""
-                    Scouting info for **{user.name.capitalize()} ({user.server})**
-                    
-                    Overall winrate: {round(100.0*sum(match_result_vector)/len(match_result_vector))}%
-                    First pick winrate: {round(100.0*sum(first_pick_wins_vector)/sum(first_pick_vector))}%
-                    Second pick winrate: {round(100.0*(sum(match_result_vector)-sum(first_pick_wins_vector))/(len(match_result_vector)-sum(first_pick_vector)))}%
-                    First pick in {sum(first_pick_vector)} of the last {len(match_result_vector)} matches"""
-                    
-                    await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+                    points.points[str(user.id)] = int(matches.matches[0].points)
+                    user.points = int(matches.matches[0].points)
+                    points.save_points()
+                    search_history.add_search_query(ctx.user.id, nickname)
+                    search_history.save_search_history()
+                    with io.BytesIO() as image_binary:
+                        image.save(image_binary, 'PNG')
+                        image_binary.seek(0)
+                        
+                        response_text = f"""
+                        Scouting info for **{user.name.capitalize()} ({user.server})**
+                        
+                        Overall winrate: {round(100.0*sum(match_result_vector)/len(match_result_vector))}%
+                        First pick winrate: {round(100.0*sum(first_pick_wins_vector)/sum(first_pick_vector))}%
+                        Second pick winrate: {round(100.0*(sum(match_result_vector)-sum(first_pick_wins_vector))/(len(match_result_vector)-sum(first_pick_vector)))}%
+                        First pick in {sum(first_pick_vector)} of the last {len(match_result_vector)} matches"""
+                        
+                        await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+                else:
+                    await ctx.followup.send('This player has not played enough games.')
             except Exception as e:
                 print(e)
                 await ctx.followup.send('This player has not played enough games.')
@@ -191,9 +182,9 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
     data = []
-    for hero_choice in hero_data_name_to_code.keys():
-        if current.lower() in hero_choice.lower() and len(data)<4:
-            data.append(app_commands.Choice(name=hero_choice, value=hero_choice))
+    search_results = hero_list.find_up_to_n_most_popular_by_name(current, 3, hero_popularity)
+    for hero in search_results:
+       data.append(app_commands.Choice(name=hero.name, value=hero.name))
     return data
 
 @tree.command(name="analyse", description="Analyse a player's recent performance with a specific hero.")
@@ -212,18 +203,23 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, darkmode:str=
         user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
         try:
             await ctx.response.defer()
-            image, picks, wins, matches = create_hero_analysis_image(user.id, user.server, hero_data_name_to_code[hero.lower()], darkmode)
-            
-            points.points[str(user.id)] = int(matches.matches[0].points)
-            user.points = int(matches.matches[0].points)
-            points.save_points()
-            search_history.add_search_query(ctx.user.id, nickname)
-            search_history.save_search_history()
-            with io.BytesIO() as image_binary:
-                image.save(image_binary, 'PNG')
-                image_binary.seek(0)
-                response_text = f'{user.name.capitalize()} ({user.server}) has played {picks} games with {hero.capitalize()} and has a {round(100*wins/picks)}% winrate with the hero.'
-                await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+            target_hero = hero_list.get_hero_by_name(hero)
+            image, picks, wins, matches = create_hero_analysis_image(user.id, user.server, target_hero.code, hero_list, darkmode)
+            if image is not None:
+                points.points[str(user.id)] = int(matches.matches[0].points)
+                user.points = int(matches.matches[0].points)
+                points.save_points()
+                hero_popularity.increase_popularity(target_hero.code)
+                hero_popularity.save_popularity()
+                search_history.add_search_query(ctx.user.id, nickname)
+                search_history.save_search_history()
+                with io.BytesIO() as image_binary:
+                    image.save(image_binary, 'PNG')
+                    image_binary.seek(0)
+                    response_text = f'{user.name.capitalize()} ({user.server}) has played {picks} games with {hero.capitalize()} and has a {round(100*wins/picks)}% winrate with the hero.'
+                    await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+            else:
+                await ctx.followup.send('That player has played too few matches with {}.'.format(hero.capitalize()))
         except Exception as e:
             print(e)
             await ctx.followup.send('That player has played too few matches with {}.'.format(hero.capitalize()))
@@ -244,7 +240,7 @@ async def trios(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
             user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
-            image, matches = create_trios_image(user.id, user.server, darkmode)
+            image, matches = create_trios_image(user.id, user.server, hero_list, darkmode)
             
             points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
@@ -274,7 +270,7 @@ async def bans(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
             user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
-            image, matches = create_ban_summary_image(user.id, user.server, darkmode)
+            image, matches = create_ban_summary_image(user.id, user.server, hero_list, darkmode)
             
             points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
@@ -324,7 +320,8 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
     else:
         try:
             await ctx.response.defer()
-            image, success = create_legend_data_image_one_hero(hero_data_name_to_code[hero.lower()], darkmode)
+            target_hero = hero_list.get_hero_by_name(hero)
+            image, success = create_legend_data_image_one_hero(target_hero.code, target_hero.name, darkmode)
             if success:
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')

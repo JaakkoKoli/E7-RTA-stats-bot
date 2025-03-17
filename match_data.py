@@ -1,11 +1,10 @@
-from functions import *
 from collections import Counter
+from hero_data import *
 
 class Pick:
-    hero_data = init_hero_data_code_to_name()
-    def __init__(self, hero:object, pick_order:int):
+    def __init__(self, hero:object, pick_order:int, hero_data:HeroList):
         self.hero_code:str = hero["hero_code"]
-        self.hero_name:str = Pick.hero_data[self.hero_code]
+        self.hero:Hero = hero_data.get_hero_by_code(hero["hero_code"])
         self.mvp:bool = hero["mvp"]
         self.ban:bool = hero["ban"]
         self.first_pick:bool = hero["first_pick"]
@@ -13,25 +12,21 @@ class Pick:
         self.image:str = f"hero_images/{self.hero_code}.png"
 
 class Match:
-    hero_data = init_hero_data_code_to_name()
-    
-    def __init__(self, match_data:object):
+    def __init__(self, match_data:object, hero_data:HeroList):
         self.picks_own:list[Pick] = []
         self.picks_enemy:list[Pick] = []
-        self.read_match_data(match_data)
+        self.read_match_data(match_data, hero_data)
         
-    def read_match_data(self, match_data:object) -> None:
+    def read_match_data(self, match_data:object, hero_data:HeroList) -> None:
         for i, hero in enumerate(match_data["my_deck"]["hero_list"]):
-            self.picks_own.append(Pick(hero, i))
+            self.picks_own.append(Pick(hero, i, hero_data))
             
         for i, hero in enumerate(match_data["enemy_deck"]["hero_list"]):
-            self.picks_enemy.append(Pick(hero, i))
-        
+            self.picks_enemy.append(Pick(hero, i, hero_data))
         self.preban_own_codes:list[str] = [x for x in match_data["my_deck"]["preban_list"] if x!=""]
-        self.preban_own_names:list[str] = [Match.hero_data[x] for x in self.preban_own_codes]
+        self.preban_own:list[str] = [hero_data.get_hero_by_code(x) for x in self.preban_own_codes]
         self.preban_enemy_codes:list[str] = [x for x in match_data["enemy_deck"]["preban_list"] if x!=""]
-        self.preban_enemy_names:list[str] = [Match.hero_data[x] for x in self.preban_enemy_codes]
-        
+        self.preban_enemy:list[str] = [hero_data.get_hero_by_code(x) for x in self.preban_enemy_codes]
         self.points = match_data["winScore"]
         self.win:bool = match_data["iswin"] == 1
         self.points_after_match:int = int(match_data["winScore"])
