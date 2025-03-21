@@ -32,10 +32,10 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, he
     if response.status_code == 200:
         match_list = response.json()["result_body"]["battle_list"]
         matches = MatchHistory([Match(match, hero_data) for match in match_list])
-        matchups = matches.get_matchup_counts()[target_hero_code]
-        matchups_wins = matches.get_matchup_win_counts()[target_hero_code]
-        allies = matches.get_ally_counts()[target_hero_code]
-        allies_wins = matches.get_ally_win_counts()[target_hero_code]
+        matchups = matches.get_matchup_counts(target_hero_code)
+        matchups_wins = matches.get_matchup_win_counts(target_hero_code)
+        allies = matches.get_ally_counts(target_hero_code)
+        allies_wins = matches.get_ally_win_counts(target_hero_code)
         match_result_vector = matches.get_match_result_vector()
     else:
         print(f"Error: {response.status_code}")
@@ -109,7 +109,7 @@ def create_hero_analysis_image(user_id:str, server:str, target_hero_code:str, he
     fig.savefig(buf)
     buf.seek(0)
     plt.close('all')
-    return Image.open(buf), matches.get_matchup_counts()[target_hero_code]["total"], matches.get_matchup_win_counts()[target_hero_code]["total"], matches
+    return Image.open(buf), matches.get_matchup_counts(target_hero_code)["total"], matches.get_matchup_win_counts(target_hero_code)["total"], matches
 
 def create_match_summary_image(user_id:str, server:str, hero_data:HeroList, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
     response = get_match_data_by_user_id(user_id, server)
@@ -127,8 +127,8 @@ def create_match_summary_image(user_id:str, server:str, hero_data:HeroList, dark
         enemy_wins = matches.get_all_enemy_pick_win_against_counts()
         prebans = matches.get_all_own_preban_counts()
         first_picks = matches.get_all_own_first_pick_counts()
-        matchups = matches.get_matchup_counts()
-        matchups_wins = matches.get_matchup_win_counts()
+        matchups = matches.get_all_matchup_counts()
+        matchups_wins = matches.get_all_matchup_win_counts()
         match_result_vector = matches.get_match_result_vector()
     else:
         print(f"Error: {response.status_code}")

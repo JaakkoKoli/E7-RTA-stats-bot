@@ -191,7 +191,14 @@ class MatchHistory:
                     first_picks.append(first_pick)
         return Counter(first_picks)
     
-    def get_matchup_counts(self) -> dict:
+    def get_matchup_counts(self, target_code:str) -> dict:
+        matchups = []
+        for match in self.matches:
+            if target_code in match.get_own_picks_codes():
+                matchups += match.get_enemy_picks_codes() + ["total"]
+        return Counter(matchups)
+    
+    def get_all_matchup_counts(self) -> dict:
         matchups = {}
         for match in self.matches:
             for own_code in match.get_own_picks_codes():
@@ -202,7 +209,14 @@ class MatchHistory:
             matchups[key] = Counter(matchups[key])
         return matchups
     
-    def get_matchup_win_counts(self) -> dict:
+    def get_matchup_win_counts(self, target_code:str) -> dict:
+        matchups = []
+        for match in self.matches:
+            if target_code in match.get_own_picks_codes() and match.win:
+                matchups += match.get_enemy_picks_codes() + ["total"]
+        return Counter(matchups)
+    
+    def get_all_matchup_win_counts(self) -> dict:
         matchups = {}
         for match in self.matches:
             if match.win:
@@ -214,7 +228,16 @@ class MatchHistory:
             matchups[key] = Counter(matchups[key])
         return matchups
     
-    def get_ally_counts(self) -> dict:
+    def get_ally_counts(self, target_code:str) -> dict:
+        allies = []
+        for match in self.matches:
+            own_pick_codes = match.get_own_picks_codes()
+            if len(own_pick_codes) == 5 and target_code in own_pick_codes:
+                i = own_pick_codes.index(target_code)
+                allies += own_pick_codes[:i] + own_pick_codes[i+1:]  + ["total"]
+        return Counter(allies)
+    
+    def get_all_ally_counts(self) -> dict:
         allies = {}
         for match in self.matches:
             own_pick_codes = match.get_own_picks_codes()
@@ -227,7 +250,16 @@ class MatchHistory:
             allies[key] = Counter(allies[key])
         return allies
     
-    def get_ally_win_counts(self) -> dict:
+    def get_ally_win_counts(self, target_code:str) -> dict:
+        allies = []
+        for match in self.matches:
+            own_pick_codes = match.get_own_picks_codes()
+            if len(own_pick_codes) == 5 and target_code in own_pick_codes and match.win:
+                i = own_pick_codes.index(target_code)
+                allies += own_pick_codes[:i] + own_pick_codes[i+1:]  + ["total"]
+        return Counter(allies)
+    
+    def get_all_ally_win_counts(self) -> dict:
         allies = {}
         for match in self.matches:
             own_pick_codes = match.get_own_picks_codes()
