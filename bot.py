@@ -111,6 +111,10 @@ async def name_autocomplete(ctx:discord.Interaction, current:str):
             data.append(app_commands.Choice(name=entry, value=entry))
     else:
         users = user_data.find_user(current)
+        usernames = [user.name for user in users]
+        if current in usernames:
+            user_string = users[usernames.index(current)].get_name_with_server()
+            data.append(app_commands.Choice(name=user_string, value=user_string))
         if len(users) != 0:
             best_indices = np.flip(np.argsort([user.points + user.level + 9000*sum([user == entry for entry in history]) for user in users]))
             i = 0
