@@ -216,17 +216,22 @@ def get_server_name(server:str) -> str:
     else:
         return "global"
 
-# Creates a winrate graph where the value at each point consists of a weighted average of the past (n_len+n_tail+n_tail2) games with the weights w
-def create_winrate_graph(win_vector:list[int], n_len:int=10, n_tail:int=10, n_tail2:int=10, w:list[float]=[0.7,0.2,0.1]) -> np.ndarray:
-    if len(win_vector) != 100:
-        if len(win_vector) > 0:
-            return [np.mean(win_vector[0:x]) for x in range(len(win_vector))]
+# Creates a winrate graph where the value at each point consists of a weighted average of the past ones
+def create_winrate_graph(win_vector:list[int]) -> np.ndarray:
+    n = len(win_vector)
+    win_vector = np.flip(win_vector)
+    if n < 40:
+        if n > 0:
+            return [np.mean(win_vector[0:x]) for x in range(n)]
         else:
             return np.zeros(100)
-    res = np.zeros(100-n_len-n_tail-n_tail2)
-    res[0] = (sum(win_vector[0:n_tail2])*w[2] + sum(win_vector[n_tail2:(n_tail2+n_tail)])*w[1] + sum(win_vector[(n_tail+n_tail2):(n_len+n_tail+n_tail2)])*w[0])/n_len
-    pointer = n_len+n_tail+n_tail-1
-    for i in range(99-(n_len+n_tail+n_tail2)):
-        pointer += 1
-        res[i+1] = (sum(win_vector[i:(i+n_tail2)])*w[2] + sum(win_vector[(i+n_tail2):(i+n_tail2+n_tail)])*w[1] + sum(win_vector[(i+n_tail+n_tail2):(i+n_len+n_tail+n_tail2)])*w[0])/n_len
-    return np.flip(res)
+    res = np.zeros(n)
+    
+    div = 1
+    for i in range(n):
+        wr = 0
+        for i2 in range(i):
+            wr += (i2+1)*win_vector[i2]/div
+        res[i] = wr
+        div += i+1
+    return np.convolve(res[30:], [0.333]*3, mode="valid")

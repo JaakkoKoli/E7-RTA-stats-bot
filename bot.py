@@ -48,7 +48,7 @@ points = Points()
 points.load_points()
 server_list = ["global", "asia", "jpn", "kor", "eu"]
 for server in server_list:
-    #get_new_userdata(server)
+    get_new_userdata(server)
     with open(f"data/epic7_user_world_{server}.json", "r") as json_file:
         server_user_data = json.load(json_file)
         user_data.read_data(server_user_data, server)
@@ -342,7 +342,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
     else:
         try:
             await ctx.response.defer()
-            user_name_and_server = nickname.rsplit("#", 1)
+            user_name_and_server = nickname.lower().rsplit("#", 1)
             user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
             response = get_match_data_by_user_id(user.id, user.server)
             if response.status_code == 200:
@@ -376,22 +376,22 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 for i, legend_player in enumerate(legend_players):
                     pick_dist = 0
                     for i2 in range(n):
-                        pick_dist += (pick_vector[i2] + legend_pick_vectors[legend_player][i2])**2
+                        pick_dist += (pick_vector[i2] - legend_pick_vectors[legend_player][i2])**2
                     pick_dists[i] = pick_dist
                 argsorted_preban_similiarities = np.argsort(preban_similiarities)    
-                argsorted_pick_dists = np.argsort(pick_dists)
+                argsorted_pick_dists = np.flip(np.argsort(pick_dists))
                 final_similiarity_scores = [0]*n
 
                 for i in range(n):
                     final_similiarity_scores[argsorted_preban_similiarities[i]] += n - i
                     final_similiarity_scores[argsorted_pick_dists[i]] += n - i
-                top_3_similiar = np.argsort(final_similiarity_scores)[:3]
+                top_5_similiar = np.argsort(final_similiarity_scores)[:5]
                 users = []
 
-                for i in range(3):
-                    user_id_and_server = legend_players[top_3_similiar[i]].rsplit("#", 1)
+                for i in range(5):
+                    user_id_and_server = legend_players[top_5_similiar[i]].rsplit("#", 1)
                     users.append(user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
-                response = f"3 most similar legend players for {user.name} ({user.server}): \n\n"
+                response = f"5 most similar legend players for {user.name} ({user.server}): \n\n"
                 for u in users:
                     response += f"[{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>)\n"
                 await ctx.followup.send(response)
