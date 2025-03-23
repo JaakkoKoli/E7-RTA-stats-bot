@@ -296,6 +296,13 @@ class MatchHistory:
             first_picks[i] = int((match.get_own_first_pick() != "") and match.win)
         return first_picks
     
+    def get_pick_vector(self, hero_dict:dict):
+        hero_vector = [0]*len(hero_dict.keys())
+        for match in self.matches:
+            for hero_code in match.get_own_picks_codes():
+                hero_vector[hero_dict[hero_code]] += 1
+        return hero_vector
+    
     def get_own_trios_picks(self):
         trios = []
         for match in self.matches:

@@ -75,3 +75,8 @@ class HeroList:
         search_popularity.sort(key=lambda x: x[0], reverse=True)
         return [search_result[x[1]] for x in search_popularity[:n]]
         
+    def get_hero_vector_dict(self):
+        hero_dict = {}
+        for i, hero_code in enumerate(self.hero_code_list):
+            hero_dict[hero_code] = i
+        return hero_dict

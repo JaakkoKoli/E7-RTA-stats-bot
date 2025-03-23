@@ -75,8 +75,14 @@ class UserData:
                 return user
         return None
     
+    def get_user_by_id(self, user_id:str, server:str) -> User:
+        return self.users[self.get_user_ids_and_server_as_list().index(f"{user_id}#{server}")]
+    
     def get_user_ids_as_list(self) -> list[int]:
         return [user.id for user in self.users]
+    
+    def get_user_ids_and_server_as_list(self) -> list[int]:
+        return [f"{user.id}#{user.server}" for user in self.users]
     
     def get_user_names_as_list(self) -> list[str]:
         return [user.name for user in self.users]

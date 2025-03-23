@@ -6,7 +6,7 @@ import random
 from discord import app_commands
 from discord.ext import commands
 import io
-from functions import save_image_from_url
+from functions import save_image_from_url, get_match_data_by_user_id
 from user_data import *
 from search_history import *
 from hero_data import *
@@ -33,6 +33,7 @@ if os.path.isfile("data/hero_popularity.json"):
 get_new_heroname_json()
 with open("data/heronames.json", "r") as json_file:
     hero_list = HeroList(json.load(json_file))
+hero_dict = hero_list.get_hero_vector_dict()
 
 current_hero_image_codes = [f.split(".")[0] for f in os.listdir("hero_images") if os.path.isfile(os.path.join("hero_images", f))]
 for herocode in hero_list.hero_code_list:
@@ -47,7 +48,7 @@ points = Points()
 points.load_points()
 server_list = ["global", "asia", "jpn", "kor", "eu"]
 for server in server_list:
-    get_new_userdata(server)
+    #get_new_userdata(server)
     with open(f"data/epic7_user_world_{server}.json", "r") as json_file:
         server_user_data = json.load(json_file)
         user_data.read_data(server_user_data, server)
@@ -328,10 +329,77 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
                     image_binary.seek(0)
                     await ctx.followup.send('', file=discord.File(fp=image_binary, filename='image.png'))
             else:
-                await ctx.followup.send('Not enough games playerd with the hero.')
+                await ctx.followup.send('Not enough games played with the hero.')
         except Exception as e:
             print(e)
-            await ctx.followup.send('Not enough games playerd with the hero.')
+            await ctx.followup.send('Not enough games played with the hero.')
+            
+@tree.command(name="similarlegendplayers", description="Find legend players with similar play styles.")
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('Deez nuts are the most similar lmao')
+    else:
+        try:
+            await ctx.response.defer()
+            user_name_and_server = nickname.rsplit("#", 1)
+            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            response = get_match_data_by_user_id(user.id, user.server)
+            if response.status_code == 200:
+                match_list = response.json()["result_body"]["battle_list"]
+                matches = MatchHistory([Match(match, hero_list) for match in match_list])
+                prebans = [x[0] for x in matches.get_all_own_preban_counts().most_common(3)]
+                pick_vector = matches.get_pick_vector(hero_dict)
+                with open("data/legend_data.json", "r") as json_file:
+                    legend_data = json.load(json_file)
+                legend_prebans = legend_data["individual_prebans"]
+                legend_pick_vectors = legend_data["pick_vectors"]
+
+                points.points[str(user.id)] = int(matches.matches[0].points)
+                user.points = int(matches.matches[0].points)
+                points.save_points()
+                search_history.add_search_query(ctx.user.id, nickname)
+                search_history.save_search_history()
+                
+                legend_players = list(legend_prebans.keys())
+                n = len(legend_players)
+                preban_similiarities = [0]*n
+
+                for i, legend_player in enumerate(legend_players):
+                    similiarity = 0
+                    for legend_preban in legend_prebans[legend_player]:
+                        if legend_preban in prebans:
+                            similiarity += (6 - 2*prebans.index(legend_preban)) * (6 - 2*legend_prebans[legend_player].index(legend_preban))
+                    preban_similiarities[i] = similiarity
+                pick_dists = [0]*n
+
+                for i, legend_player in enumerate(legend_players):
+                    pick_dist = 0
+                    for i2 in range(n):
+                        pick_dist += (pick_vector[i2] + legend_pick_vectors[legend_player][i2])**2
+                    pick_dists[i] = pick_dist
+                argsorted_preban_similiarities = np.argsort(preban_similiarities)    
+                argsorted_pick_dists = np.argsort(pick_dists)
+                final_similiarity_scores = [0]*n
+
+                for i in range(n):
+                    final_similiarity_scores[argsorted_preban_similiarities[i]] += n - i
+                    final_similiarity_scores[argsorted_pick_dists[i]] += n - i
+                top_3_similiar = np.argsort(final_similiarity_scores)[:3]
+                users = []
+
+                for i in range(3):
+                    user_id_and_server = legend_players[top_3_similiar[i]].rsplit("#", 1)
+                    users.append(user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
+                response = f"3 most similar legend players for {user.name} ({user.server}): \n\n"
+                for u in users:
+                    response += f"[{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>)\n"
+                await ctx.followup.send(response)
+            else:
+                await ctx.followup.send('Not enough games played.')
+        except Exception as e:
+            print(e)
+            await ctx.followup.send('Not enough games played.')
 
 @bot.event
 async def on_ready():
