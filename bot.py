@@ -10,6 +10,10 @@ from functions import save_image_from_url, get_match_data_by_user_id
 from user_data import *
 from search_history import *
 from hero_data import *
+from datetime import datetime, timedelta
+from sklearn.decomposition import NMF
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Check if required folder structure exists, create if not
 
@@ -58,6 +62,18 @@ user_data.load_points(points.points)
 search_history = SearchHistory()
 if os.path.exists("data/search_history.json"):
     search_history.load_search_history()
+
+def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
+    with open("data/legend_data.json", "r") as json_file:
+        legend_data = json.load(json_file)
+    nmf = NMF(n_components=4, init="nndsvd", random_state=42)
+    legend_vectors = np.asarray([vector for vector in legend_data["pick_vectors"].values()])
+    return legend_data, datetime.now(), nmf, nmf.fit_transform(legend_vectors)
+
+def twelve_hours_from_last_update(last_update:datetime) -> bool:
+    return datetime.now() - last_update >= timedelta(hours=12)
+
+legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
 
 # Load banned users/discord servers
 poobrain_set = set()
@@ -302,7 +318,10 @@ async def legendstats(ctx:discord.Interaction, darkmode:str="on"):
     else:
         try:
             await ctx.response.defer()
-            image = create_legend_data_summary_image(darkmode)
+            global legend_data, legend_data_update_time, nmf, transformed_legend_picks
+            if twelve_hours_from_last_update(legend_data_update_time):
+                legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+            image = create_legend_data_summary_image(legend_data, darkmode)
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
@@ -325,8 +344,11 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
     else:
         try:
             await ctx.response.defer()
+            global legend_data, legend_data_update_time, nmf, transformed_legend_picks
+            if twelve_hours_from_last_update(legend_data_update_time):
+                legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
             target_hero = hero_list.get_hero_by_name(hero)
-            image, success = create_legend_data_image_one_hero(target_hero.code, target_hero.name, darkmode)
+            image, success = create_legend_data_image_one_hero(target_hero.code, target_hero.name, legend_data, darkmode)
             if success:
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')
@@ -354,10 +376,10 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 matches = MatchHistory([Match(match, hero_list) for match in match_list])
                 prebans = [x[0] for x in matches.get_all_own_preban_counts().most_common(3)]
                 pick_vector = matches.get_pick_vector(hero_dict)
-                with open("data/legend_data.json", "r") as json_file:
-                    legend_data = json.load(json_file)
+                global legend_data, legend_data_update_time, nmf, transformed_legend_picks
+                if twelve_hours_from_last_update(legend_data_update_time):
+                    legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
                 legend_prebans = legend_data["individual_prebans"]
-                legend_pick_vectors = legend_data["pick_vectors"]
 
                 points.points[str(user.id)] = int(matches.matches[0].points)
                 user.points = int(matches.matches[0].points)
@@ -374,30 +396,26 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                     for legend_preban in legend_prebans[legend_player]:
                         if legend_preban in prebans:
                             similiarity += (6 - 2*prebans.index(legend_preban)) * (6 - 2*legend_prebans[legend_player].index(legend_preban))
-                    preban_similiarities[i] = similiarity
-                pick_dists = [0]*n
-
+                    preban_similiarities[i] = similiarity / (len(legend_prebans[legend_player]) + len(prebans))
+                    
+                pick_dists = [0.0]*n
+                transformed_picks = nmf.transform(np.asarray(pick_vector).reshape(1, -1))[0]
                 for i, legend_player in enumerate(legend_players):
-                    pick_dist = 0
-                    for i2 in range(n):
-                        pick_dist += (pick_vector[i2] - legend_pick_vectors[legend_player][i2])**2
-                    pick_dists[i] = pick_dist
-                argsorted_preban_similiarities = np.argsort(preban_similiarities)    
-                argsorted_pick_dists = np.flip(np.argsort(pick_dists))
+                    pick_dists[i] = np.linalg.norm(transformed_picks-transformed_legend_picks[i])
+                argsorted_preban_similiarities = np.flip(np.argsort(preban_similiarities))    
+                argsorted_pick_dists = np.argsort(pick_dists)
                 final_similiarity_scores = [0]*n
-
                 for i in range(n):
-                    final_similiarity_scores[argsorted_preban_similiarities[i]] += n - i
-                    final_similiarity_scores[argsorted_pick_dists[i]] += n - i
-                top_5_similiar = np.argsort(final_similiarity_scores)[:5]
+                    final_similiarity_scores[argsorted_preban_similiarities[i]] += (n - i)*0.2
+                    final_similiarity_scores[argsorted_pick_dists[i]] += (n - i)*0.8
+                top_5_similiar = np.flip(np.argsort(final_similiarity_scores))[:5]
                 users = []
-
                 for i in range(5):
                     user_id_and_server = legend_players[top_5_similiar[i]].rsplit("#", 1)
                     users.append(user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
                 response = f"5 most similar legend players for {user.name} ({user.server}): \n\n"
-                for u in users:
-                    response += f"[{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>)\n"
+                for i, u in enumerate(users):
+                    response += f"{i+1} [{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>) ({round(final_similiarity_scores[top_5_similiar[i]], 1)})\n"
                 await ctx.followup.send(response)
             else:
                 await ctx.followup.send('Not enough games played.')

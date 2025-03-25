@@ -347,10 +347,7 @@ def create_trios_image(user_id:str, server:str, hero_data:HeroList, darkmode:boo
     plt.close('all')
     return Image.open(buf), matches
 
-def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
-    with open("data/legend_data.json", "r") as json_file:
-        legend_data = json.load(json_file)
-
+def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> np.ndarray:
     presence = Counter(legend_data["presence"])
 
     picks = Counter(legend_data["picks"])
@@ -485,10 +482,7 @@ def create_legend_data_summary_image(darkmode:bool=False) -> np.ndarray:
     plt.close('all')
     return Image.open(buf)
 
-def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str, darkmode:bool=False) -> tuple[np.ndarray, bool]:
-    with open("data/legend_data.json", "r") as json_file:
-        legend_data = json.load(json_file)
-
+def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str, legend_data:dict, darkmode:bool=False) -> tuple[np.ndarray, bool]:
     picks = Counter(legend_data["picks"])
     wins = Counter(legend_data["wins"])
 
