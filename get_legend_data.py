@@ -55,7 +55,7 @@ legend_player_prebans = {}
 for i in range(len(match_list)):
     matches = MatchHistory([Match(match, hero_list) for match in match_list[i]])
     legend_player_pick_vectors[legend_player_dict[str(i)]] = matches.get_pick_vector(hero_dict)
-    legend_player_prebans[legend_player_dict[str(i)]] = [x[0] for x in matches.get_all_own_preban_counts().most_common(3)]
+    legend_player_prebans[legend_player_dict[str(i)]] = {x[0]: x[1] for x in matches.get_all_own_preban_counts().most_common(3)}
 
 matches = MatchHistory([Match(match, hero_list) for match in match_list_all])
 

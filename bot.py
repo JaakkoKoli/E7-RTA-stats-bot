@@ -124,18 +124,22 @@ async def shitpost(ctx:discord.Interaction):
 async def name_autocomplete(ctx:discord.Interaction, current:str):
     data = []
     history = search_history.get_user_history(ctx.user.id)
+    # if nothing typed, recommend previous searches
     if len(current) == 0:
         for entry in history:
             data.append(app_commands.Choice(name=entry, value=entry))
     else:
         users = user_data.find_user(current)
         usernames = [user.name for user in users]
+        # Add if some name matches the search exactly
         if current in usernames:
             user_string = users[usernames.index(current)].get_name_with_server()
             data.append(app_commands.Choice(name=user_string, value=user_string))
         if len(users) != 0:
+            # Priority for users with a matching name: in search history > highest rank > shortest name > highest account level
             best_indices = np.flip(np.argsort([user.points + user.level + (2000 - len(user.name)) + 9000*sum([user == entry for entry in history]) for user in users]))
             i = 0
+            # Add results until 3 or no vaild left
             while len(data) < 3 and i < len(best_indices):
                 user = users[best_indices[i]]
                 if user.name != current:
@@ -378,7 +382,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
             if response.status_code == 200:
                 match_list = response.json()["result_body"]["battle_list"]
                 matches = MatchHistory([Match(match, hero_list) for match in match_list])
-                prebans = [x[0] for x in matches.get_all_own_preban_counts().most_common(3)]
+                prebans = {x[0]: x[1] for x in matches.get_all_own_preban_counts().most_common(3)}
                 pick_vector = matches.get_pick_vector(hero_dict)
                 global legend_data, legend_data_update_time, nmf, transformed_legend_picks
                 if twelve_hours_from_last_update(legend_data_update_time):
@@ -393,33 +397,33 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 
                 legend_players = list(legend_prebans.keys())
                 n = len(legend_players)
+                # Calculate how similar prebans are
                 preban_similiarities = [0]*n
-
                 for i, legend_player in enumerate(legend_players):
                     similiarity = 0
-                    for legend_preban in legend_prebans[legend_player]:
-                        if legend_preban in prebans:
-                            similiarity += (6 - 2*prebans.index(legend_preban)) * (6 - 2*legend_prebans[legend_player].index(legend_preban))
-                    preban_similiarities[i] = similiarity / (len(legend_prebans[legend_player]) + len(prebans))
-                    
+                    for legend_preban in legend_prebans[legend_player].keys():
+                        if legend_preban in prebans.keys():
+                            similiarity += min(prebans[legend_preban], legend_prebans[legend_player][legend_preban])
+                    preban_similiarities[i] = similiarity
+                # Calculate how similar picks are
                 pick_dists = [0.0]*n
                 transformed_picks = nmf.transform(np.asarray(pick_vector).reshape(1, -1))[0]
                 for i, legend_player in enumerate(legend_players):
                     pick_dists[i] = np.linalg.norm(transformed_picks-transformed_legend_picks[i])
-                argsorted_preban_similiarities = np.flip(np.argsort(preban_similiarities))    
-                argsorted_pick_dists = np.argsort(pick_dists)
-                final_similiarity_scores = [0]*n
-                for i in range(n):
-                    final_similiarity_scores[argsorted_preban_similiarities[i]] += (n - i)*0.2
-                    final_similiarity_scores[argsorted_pick_dists[i]] += (n - i)*0.8
-                top_5_similiar = np.flip(np.argsort(final_similiarity_scores))[:5]
+                # Normalise scores
+                picks_max = max(pick_dists)
+                pick_scores = [100 - 100*x/picks_max for x in pick_dists]
+                preban_scores = [x/2 for x in preban_similiarities]
+                # Final score based on 80% picks, 20% prebans
+                final_scores = [0.8*pick_scores[i] + 0.2*preban_scores[i] for i in range(len(preban_scores))]
+                top_5_similiar = np.flip(np.argsort(final_scores))[:5]
                 users = []
                 for i in range(5):
                     user_id_and_server = legend_players[top_5_similiar[i]].rsplit("#", 1)
                     users.append(user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
                 response = f"5 most similar legend players for {user.name} ({user.server}): \n\n"
                 for i, u in enumerate(users):
-                    response += f"{i+1} [{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>) ({round(final_similiarity_scores[top_5_similiar[i]], 1)})\n"
+                    response += f"{i+1} [{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>) ({round(final_scores[top_5_similiar[i]], 1)})\n"
                 await ctx.followup.send(response)
             else:
                 await ctx.followup.send('Not enough games played.')
