@@ -77,16 +77,18 @@ legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_leg
 
 # Load banned users/discord servers
 poobrain_set = set()
-with open('poobrain.txt', 'r') as file:
-    for line in file:
-        values = line.strip().split(', ')
-        poobrain_set.update(values)
+if os.path.isfile("poobrain.txt"):
+    with open('poobrain.txt', 'r') as file:
+        for line in file:
+            values = line.strip().split(', ')
+            poobrain_set.update(values)
         
 pooguild_set = set()
-with open('pooguilds.txt', 'r') as file:
-    for line in file:
-        values = line.strip().split(', ')
-        pooguild_set.update(values)
+if os.path.isfile("pooguilds.txt"):
+    with open('pooguilds.txt', 'r') as file:
+        for line in file:
+            values = line.strip().split(', ')
+            pooguild_set.update(values)
 
 # Bot setup
 
@@ -132,11 +134,13 @@ async def name_autocomplete(ctx:discord.Interaction, current:str):
             user_string = users[usernames.index(current)].get_name_with_server()
             data.append(app_commands.Choice(name=user_string, value=user_string))
         if len(users) != 0:
-            best_indices = np.flip(np.argsort([user.points + user.level + 9000*sum([user == entry for entry in history]) for user in users]))
+            best_indices = np.flip(np.argsort([user.points + user.level + (2000 - len(user.name)) + 9000*sum([user == entry for entry in history]) for user in users]))
             i = 0
             while len(data) < 3 and i < len(best_indices):
-                user_string = users[best_indices[i]].get_name_with_server()
-                data.append(app_commands.Choice(name=user_string, value=user_string))
+                user = users[best_indices[i]]
+                if user.name != current:
+                    user_string = user.get_name_with_server()
+                    data.append(app_commands.Choice(name=user_string, value=user_string))
                 i += 1
         else:
             for entry in history:
