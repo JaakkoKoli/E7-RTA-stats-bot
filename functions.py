@@ -38,9 +38,8 @@ def get_new_heroname_json() -> None:
     if response.status_code == 200:
         with open("data/heronames.json", "w") as file:
             json.dump(response.json()["en"], file)
-        print(f"File saved successfully as heroname.json")
     else:
-        print("Failed to download file")
+        print("Failed to download file heronames.json")
 
 
 def get_herocodes() -> list[str]:

@@ -67,7 +67,7 @@ def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
     with open("data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
     nmf = NMF(n_components=4, init="nndsvd", random_state=42)
-    legend_vectors = np.asarray([vector for vector in legend_data["pick_vectors"].values()])
+    legend_vectors = np.asarray([vector for vector in legend_data["pick_vectors"].values()]) / 100.0
     return legend_data, datetime.now(), nmf, nmf.fit_transform(legend_vectors)
 
 def twelve_hours_from_last_update(last_update:datetime) -> bool:
@@ -407,7 +407,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                     preban_similiarities[i] = similiarity
                 # Calculate how similar picks are
                 pick_dists = [0.0]*n
-                transformed_picks = nmf.transform(np.asarray(pick_vector).reshape(1, -1))[0]
+                transformed_picks = nmf.transform(np.asarray(pick_vector).reshape(1, -1) / 100.0)[0]
                 for i, legend_player in enumerate(legend_players):
                     pick_dists[i] = np.linalg.norm(transformed_picks-transformed_legend_picks[i])
                 # Normalise scores
