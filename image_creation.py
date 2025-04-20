@@ -375,6 +375,8 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
     winrate_prebans = get_predicted_winrate(prebans, prebans_wins, int(sum(prebans_wins.values())/5), int(sum(prebans.values())/5))
     winrate_first_picks = get_predicted_winrate(first_picks, first_picks_wins, int(sum(first_picks_wins.values())/5), int(sum(first_picks.values())/5))
 
+    n_games = sum(picks.values())/5
+    
     fig, axes = plt.subplots(nrows=8, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [1.8, 1, 1, 1, 1, 1]})
     fig.subplots_adjust(hspace=1)
     fontsize_s = 16
@@ -445,25 +447,25 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
             axes[0, i+1].text(0.6, -0.6, f"{round(100*late_picks_wins[top_late_picks[i][0]]/late_picks[top_late_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[4, i+1].transAxes, color=textcol)
         axes[4, i+1].axis('off')
 
-    axes[5, 0].text(-0.5, 0.5, "Best prebans", fontsize=24, va='center', transform=axes[5, 0].transAxes, color=textcol)
+    axes[5, 0].text(-0.5, 0.5, "Prebans", fontsize=24, va='center', transform=axes[5, 0].transAxes, color=textcol)
     axes[5, 0].axis('off')
     
-    top_prebans = winrate_prebans.most_common(5)
+    top_prebans = prebans.most_common(5)
     for i in range(5):
         if i<len(top_prebans):
             icon = get_hero_img(top_prebans[i][0])
             axes[5, i+1].imshow(icon)
-            axes[0, i+1].text(0.6, -0.6, f"{round(100*prebans_wins[top_prebans[i][0]]/prebans[top_prebans[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.6, -0.6, f"{round(100*prebans[top_prebans[i][0]]/n_games,1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
         axes[5, i+1].axis('off')
 
-    axes[6, 0].text(-0.5, 0.5, "Best first picks", fontsize=24, va='center', transform=axes[6, 0].transAxes, color=textcol)
+    axes[6, 0].text(-0.5, 0.5, "First picks", fontsize=24, va='center', transform=axes[6, 0].transAxes, color=textcol)
     axes[6, 0].axis('off')
-    top_first_picks = winrate_first_picks.most_common(5)
+    top_first_picks = first_picks.most_common(5)
     for i in range(5):
         if i<len(top_first_picks):
             icon = get_hero_img(top_first_picks[i][0])
             axes[6, i+1].imshow(icon)
-            axes[0, i+1].text(0.6, -0.6, f"{round(100*first_picks_wins[top_first_picks[i][0]]/first_picks[top_first_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.6, -0.6, f"{round(100*first_picks[top_first_picks[i][0]]/sum(first_picks.values()),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
         axes[6, i+1].axis('off')
 
     axes[7, 0].text(-0.5, 0.5, "Highest presence", fontsize=24, va='center', transform=axes[7, 0].transAxes, color=textcol)
@@ -473,7 +475,7 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
         if i<len(top_presence):
             icon = get_hero_img(top_presence[i][0])
             axes[7, i+1].imshow(icon)
-            axes[0, i+1].text(0.6, -0.6, f"{round(100*presence[top_presence[i][0]]/(sum(picks.values())/5),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[7, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.6, -0.6, f"{round(100*presence[top_presence[i][0]]/(n_games),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[7, i+1].transAxes, color=textcol)
         axes[7, i+1].axis('off')
 
     buf = io.BytesIO()

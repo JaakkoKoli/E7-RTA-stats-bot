@@ -300,7 +300,9 @@ class MatchHistory:
         hero_vector = [0]*len(hero_dict.keys())
         for match in self.matches:
             for hero_code in match.get_own_picks_codes():
-                hero_vector[hero_dict[hero_code]] += 1
+                i = hero_dict.get(hero_code, None)
+                if i is not None:
+                    hero_vector[i] += 1
         return hero_vector
     
     def get_own_trios_picks(self):

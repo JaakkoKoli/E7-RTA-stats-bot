@@ -52,10 +52,18 @@ class HeroList:
         return hero_name_dict
     
     def get_hero_by_code(self, code:str) -> Hero:
-        return self.hero_list[self.hero_code_dict.get(code, None)]
+        i = self.hero_code_dict.get(code, None)
+        if i is None:
+            return None
+        else:
+            return self.hero_list[i]
     
     def get_hero_by_name(self, name:str) -> Hero:
-        return self.hero_list[self.hero_name_dict.get(name.lower(), None)]
+        i = self.hero_name_dict.get(name.lower(), None)
+        if i is None:
+            return None
+        else:    
+            return self.hero_list[i]
     
     def find_by_name(self, search_query:str) -> list[Hero]:
         search_result = []
