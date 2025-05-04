@@ -4,3 +4,6 @@ hero_images/
 data/
 *.txt
 __pycache__/
+tests/__pycache__/
+.pytest_cache/
+htmlcov/

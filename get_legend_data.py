@@ -13,11 +13,11 @@ def get_legend_players() -> tuple[list[int], list[str]]:
     try:
         for i in range(10):
             response = requests.post(
-            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss16&world_code=all&current_page={i+1}&lang=en"
+            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss17&world_code=all&current_page={i+1}&lang=en"
             )
             if len(response.json()["result_body"]) == 0:
                 response = requests.post(
-                f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss15&world_code=all&current_page={i+1}&lang=en"
+                f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss16&world_code=all&current_page={i+1}&lang=en"
                 )
             if response.status_code == 200:
                 responses += [response.json()]

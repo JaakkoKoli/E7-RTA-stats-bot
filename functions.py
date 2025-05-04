@@ -79,22 +79,6 @@ def get_top_100_players():
     return res
 
 
-def is_server(string:str) -> bool:
-    return string.lower() in ["global", "europe", "eu", "japan", "jpn", "asia", "korea", "kor"]
-
-def get_server_name(server:str) -> str:
-    server = server.lower()
-    if server == "europe" or server == "eu":
-        return "eu"
-    elif server == "japan" or server == "jpn":
-        return "jpn"
-    elif server == "asia":
-        return "asia"
-    elif server == "korea" or server == "kor":
-        return "kor"
-    else:
-        return "global"
-
 def clean(string:str) -> str:
     return string.replace("'","").replace("[","").replace("]","")
 
@@ -221,7 +205,7 @@ def create_winrate_graph(win_vector:list[int]) -> np.ndarray:
     win_vector = np.flip(win_vector)
     if n < 40:
         if n > 0:
-            return [np.mean(win_vector[0:x]) for x in range(n)]
+            return [np.mean(win_vector)]*n
         else:
             return np.zeros(100)
     res = np.zeros(n)
