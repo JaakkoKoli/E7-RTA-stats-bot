@@ -363,9 +363,11 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
     late_picks_wins = Counter(legend_data["late_picks_wins"])
 
     prebans = Counter(legend_data["prebans"])
+    prebans_all = Counter(legend_data["prebans_all"])
     prebans_wins = Counter(legend_data["prebans_wins"])
 
     first_picks = Counter(legend_data["first_picks"])
+    first_picks_all = Counter(legend_data["first_picks_all"])
     first_picks_wins = Counter(legend_data["first_picks_wins"])
     
     winrate = get_predicted_winrate(picks, wins, int(sum(wins.values())/5), int(sum(picks.values())/5))
@@ -450,22 +452,22 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
     axes[5, 0].text(-0.5, 0.5, "Prebans", fontsize=24, va='center', transform=axes[5, 0].transAxes, color=textcol)
     axes[5, 0].axis('off')
     
-    top_prebans = prebans.most_common(5)
+    top_prebans = prebans_all.most_common(5)
     for i in range(5):
         if i<len(top_prebans):
             icon = get_hero_img(top_prebans[i][0])
             axes[5, i+1].imshow(icon)
-            axes[0, i+1].text(0.6, -0.6, f"{round(100*prebans[top_prebans[i][0]]/n_games,1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.6, -0.6, f"{round(100*prebans_all[top_prebans[i][0]]/n_games,1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
         axes[5, i+1].axis('off')
 
     axes[6, 0].text(-0.5, 0.5, "First picks", fontsize=24, va='center', transform=axes[6, 0].transAxes, color=textcol)
     axes[6, 0].axis('off')
-    top_first_picks = first_picks.most_common(5)
+    top_first_picks = first_picks_all.most_common(5)
     for i in range(5):
         if i<len(top_first_picks):
             icon = get_hero_img(top_first_picks[i][0])
             axes[6, i+1].imshow(icon)
-            axes[0, i+1].text(0.6, -0.6, f"{round(100*first_picks[top_first_picks[i][0]]/sum(first_picks.values()),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
+            axes[0, i+1].text(0.6, -0.6, f"{round(100*first_picks_all[top_first_picks[i][0]]/(n_games),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
         axes[6, i+1].axis('off')
 
     axes[7, 0].text(-0.5, 0.5, "Highest presence", fontsize=24, va='center', transform=axes[7, 0].transAxes, color=textcol)
@@ -489,18 +491,23 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     wins = Counter(legend_data["wins"])
 
     early_picks = Counter(legend_data["early_picks"])
+    early_picks_all = Counter(legend_data["early_picks_all"])
     early_picks_wins = Counter(legend_data["early_picks_wins"])
 
     third_picks = Counter(legend_data["third_picks"])
+    third_picks_all = Counter(legend_data["third_picks_all"])
     third_picks_wins = Counter(legend_data["third_picks_wins"])
 
     late_picks = Counter(legend_data["late_picks"])
+    late_picks_all = Counter(legend_data["late_picks_all"])
     late_picks_wins = Counter(legend_data["late_picks_wins"])
 
     prebans = Counter(legend_data["prebans"])
+    prebans_all = Counter(legend_data["prebans_all"])
     prebans_wins = Counter(legend_data["prebans_wins"])
 
     first_picks = Counter(legend_data["first_picks"])
+    first_picks_all = Counter(legend_data["first_picks_all"])
     first_picks_wins = Counter(legend_data["first_picks_wins"])
     
     if picks[target_hero_code] == 0:
@@ -573,7 +580,7 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
         axes[3, i+1].axis('off')
     axes[3, 1].text(0, 0.4, f"{round(100*prebans[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[3, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[3, 4].text(0, 0.4, f"Prebanned in {prebans[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[3, 4].text(0, 0.4, f"Prebanned in {prebans_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
     if first_picks[target_hero_code] != 0:
         axes[3, 1].text(1.0, -0.3, f"Preban winrate: {round(100*prebans_wins[target_hero_code]/prebans[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
     else:
@@ -583,9 +590,9 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     axes[4, 0].axis('off')
     for i in range(5):
         axes[4, i+1].axis('off')
-    axes[4, 1].text(0, 0.4, f"{round(100*first_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[4, 1].text(0, 0.4, f"{round(100*first_picks_all[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[4, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[4, 4].text(0, 0.4, f"First picked in {first_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[4, 4].text(0, 0.4, f"First picked in {first_picks_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
     if first_picks[target_hero_code] != 0:
         axes[4, 1].text(1.0, -0.3, f"First pick winrate: {round(100*first_picks_wins[target_hero_code]/first_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
     else:
@@ -595,9 +602,9 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     axes[5, 0].axis('off')
     for i in range(5):
         axes[5, i+1].axis('off')
-    axes[5, 1].text(0, 0.4, f"{round(100*early_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[5, 1].text(0, 0.4, f"{round(100*early_picks_all[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[5, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[5, 4].text(0, 0.4, f"Picked early in {early_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[5, 4].text(0, 0.4, f"Picked early in {early_picks_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
     if early_picks[target_hero_code] != 0:
         axes[5, 1].text(1.0, -0.3, f"Early pick winrate: {round(100*early_picks_wins[target_hero_code]/early_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
     else:
@@ -607,9 +614,9 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     axes[6, 0].axis('off')
     for i in range(5):
         axes[6, i+1].axis('off')
-    axes[6, 1].text(0, 0.4, f"{round(100*third_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[6, 1].text(0, 0.4, f"{round(100*third_picks_all[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[6, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[6, 4].text(0, 0.4, f"Picked third in {third_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[6, 4].text(0, 0.4, f"Picked third in {third_picks_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
     if third_picks[target_hero_code] != 0:
         axes[6, 1].text(1.0, -0.3, f"Third pick winrate: {round(100*third_picks_wins[target_hero_code]/third_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
     else:
@@ -619,9 +626,9 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     axes[7, 0].axis('off')
     for i in range(5):
         axes[7, i+1].axis('off')
-    axes[7, 1].text(0, 0.4, f"{round(100*late_picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[7, 1].text(0, 0.4, f"{round(100*late_picks_all[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
     axes[7, 1].text(0.8, 0.4, f" - ", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[7, 4].text(0, 0.4, f"Picked late in {late_picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
+    axes[7, 4].text(0, 0.4, f"Picked late in {late_picks_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s+2, ha='center', color=textcol)
     if late_picks[target_hero_code] != 0:
         axes[7, 1].text(1.0, -0.3, f"Late pick winrate: {round(100*late_picks_wins[target_hero_code]/late_picks[target_hero_code],1)}%", fontsize=fontsize_s, ha='center', color=textcol)
     else:

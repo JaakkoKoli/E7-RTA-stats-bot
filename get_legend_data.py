@@ -70,18 +70,23 @@ picks = matches.get_all_own_pick_counts()
 wins = matches.get_all_own_pick_win_counts()
 
 early_picks = matches.get_all_own_pick_counts_by_pick_order([0,1])
+early_picks_all = matches.get_all_pick_counts_by_pick_order([0,1])
 early_picks_wins = matches.get_all_own_win_counts_by_pick_order([0,1])
 
 third_picks = matches.get_all_own_pick_counts_by_pick_order([2])
+third_picks_all = matches.get_all_pick_counts_by_pick_order([2])
 third_picks_wins = matches.get_all_own_win_counts_by_pick_order([2])
 
 late_picks = matches.get_all_own_pick_counts_by_pick_order([3,4])
+late_picks_all = matches.get_all_pick_counts_by_pick_order([3,4])
 late_picks_wins = matches.get_all_own_win_counts_by_pick_order([3,4])
 
 prebans = matches.get_all_own_preban_counts()
+prebans_all = matches.get_all_preban_counts()
 prebans_wins = matches.get_all_own_preban_win_counts()
 
 first_picks = matches.get_all_own_first_pick_counts()
+first_picks_all = matches.get_all_first_pick_counts()
 first_picks_wins = matches.get_all_own_first_pick_win_counts()
 
 
@@ -90,14 +95,19 @@ legend_data = {"presence": presence,
                "picks": picks,
                "wins": wins,
                "early_picks": early_picks,
+               "early_picks_all": early_picks_all,
                "early_picks_wins": early_picks_wins,
                "third_picks": third_picks,
+               "third_picks_all": third_picks_all,
                "third_picks_wins": third_picks_wins,
                "late_picks": late_picks,
+               "late_picks_all": late_picks_all,
                "late_picks_wins": late_picks_wins,
                "prebans": prebans,
+               "prebans_all": prebans_all,
                "prebans_wins": prebans_wins,
                "first_picks": first_picks,
+               "first_picks_all": first_picks_all,
                "first_picks_wins": first_picks_wins,
                "pick_vectors": legend_player_pick_vectors,
                "individual_prebans": legend_player_prebans}

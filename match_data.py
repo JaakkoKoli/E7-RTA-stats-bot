@@ -58,6 +58,15 @@ class Match:
                 return pick.hero_code
         return ""
     
+    def get_first_pick(self) -> str:
+        for pick in self.picks_own:
+            if pick.first_pick:
+                return pick.hero_code
+        for pick in self.picks_enemy:
+            if pick.first_pick:
+                return pick.hero_code
+        return ""
+    
     def get_own_first_pick(self) -> str:
         for pick in self.picks_own:
             if pick.first_pick:
@@ -76,6 +85,17 @@ class MatchHistory:
         picks = []
         for match in self.matches:
             picks += match.get_own_picks_codes() + match.get_enemy_picks_codes() + list(set(match.preban_enemy_codes + match.preban_own_codes))
+        return Counter(picks)
+    
+    def get_all_pick_counts_by_pick_order(self, pick_order:list[int]) -> Counter:
+        picks = []
+        for match in self.matches:
+            for pick in match.picks_own:
+                if pick.pick_order in pick_order:
+                    picks += [pick.hero_code]
+            for pick in match.picks_enemy:
+                if pick.pick_order in pick_order:
+                    picks += [pick.hero_code]
         return Counter(picks)
     
     def get_all_own_pick_counts_by_pick_order(self, pick_order:list[int]) -> Counter:
@@ -120,6 +140,12 @@ class MatchHistory:
             if match.win:
                 picks += match.get_enemy_picks_codes()
         return Counter(picks)
+    
+    def get_all_preban_counts(self) -> Counter:
+        prebans = []
+        for match in self.matches:
+            prebans += list(set(match.preban_own_codes + match.preban_enemy_codes))
+        return Counter(prebans)
     
     def get_all_own_preban_counts(self) -> Counter:
         prebans = []
@@ -173,6 +199,14 @@ class MatchHistory:
             if ban != "" and match.win:
                 bans.append(ban)
         return Counter(bans)
+    
+    def get_all_first_pick_counts(self) -> Counter:
+        first_picks = []
+        for match in self.matches:
+            first_pick = match.get_first_pick()
+            if first_pick != "":
+                first_picks.append(first_pick)
+        return Counter(first_picks)
     
     def get_all_own_first_pick_counts(self) -> Counter:
         first_picks = []
