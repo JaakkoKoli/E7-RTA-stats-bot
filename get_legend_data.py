@@ -67,6 +67,7 @@ matches = MatchHistory([Match(match, hero_list) for match in match_list_all])
 presence = matches.get_all_heroes_present_counts()
 
 picks = matches.get_all_own_pick_counts()
+picks_all = matches.get_all_pick_counts()
 wins = matches.get_all_own_pick_win_counts()
 
 early_picks = matches.get_all_own_pick_counts_by_pick_order([0,1])
@@ -93,6 +94,7 @@ first_picks_wins = matches.get_all_own_first_pick_win_counts()
 
 legend_data = {"presence": presence,
                "picks": picks,
+               "picks_all": picks_all,
                "wins": wins,
                "early_picks": early_picks,
                "early_picks_all": early_picks_all,

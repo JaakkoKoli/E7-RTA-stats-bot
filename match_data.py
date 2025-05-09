@@ -115,6 +115,12 @@ class MatchHistory:
                         picks += [pick.hero_code]
         return Counter(picks)
     
+    def get_all_pick_counts(self) -> Counter:
+        picks = []
+        for match in self.matches:
+            picks += match.get_own_picks_codes() + match.get_enemy_picks_codes()
+        return Counter(picks)
+    
     def get_all_own_pick_counts(self) -> Counter:
         picks = []
         for match in self.matches:

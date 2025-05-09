@@ -488,6 +488,7 @@ def create_legend_data_summary_image(legend_data:dict, darkmode:bool=False) -> n
 
 def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str, legend_data:dict, darkmode:bool=False) -> tuple[np.ndarray, bool]:
     picks = Counter(legend_data["picks"])
+    picks_all = Counter(legend_data["picks_all"])
     wins = Counter(legend_data["wins"])
 
     early_picks = Counter(legend_data["early_picks"])
@@ -572,7 +573,7 @@ def create_legend_data_image_one_hero(target_hero_code:str, target_hero_name:str
     for i in range(5):
         axes[2, i+1].axis('off')
     axes[2, 1].text(0.1, 0.4, f"{round(100*picks[target_hero_code]/matches_n,1)}%", fontsize=fontsize_s+2, ha='center', color=textcol)
-    axes[2, 2].text(0.6, -0.3, f"Picked in {picks[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s, ha='center', color=textcol)
+    axes[2, 2].text(0.6, -0.3, f"Picked in {picks_all[target_hero_code]} out of {matches_n} matches.", fontsize=fontsize_s, ha='center', color=textcol)
 
     axes[3, 0].text(-0.5, 0.2, "Preban", fontsize=fontsize_m+2, va='center',  color=textcol)
     axes[3, 0].axis('off')
