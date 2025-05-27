@@ -1,5 +1,6 @@
 .env
 *.json
+!test_data.json
 hero_images/
 data/
 *.txt
