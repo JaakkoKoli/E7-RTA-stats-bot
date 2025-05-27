@@ -38,7 +38,7 @@ class Match:
         return [x.hero_code for x in self.picks_enemy]
     
     def get_all_picks_codes(self) -> list[str]:
-        return self.get_all_picks_codes + self.get_enemy_picks_codes
+        return self.get_own_picks_codes() + self.get_enemy_picks_codes()
     
     def get_own_mvp(self) -> str:
         for pick in self.picks_own:
