@@ -62,6 +62,8 @@ class UserData:
         if len(search_query) == 0:
             return []
         search_query = search_query.lower()
+        if search_query[0] not in self.index.keys():
+            return [] 
         search_area = self.index[search_query[0]]
         matches = []
         for user in self.users[search_area[0]:search_area[1]]:
@@ -70,6 +72,9 @@ class UserData:
         return matches
     
     def get_user(self, user_name:str, server:str) -> User:
+        user_name = user_name.lower()
+        if user_name[0] not in self.index.keys():
+            return None
         for user in self.users[self.index[user_name[0]][0]:self.index[user_name[0]][1]]:
             if user.name == user_name and user.server == server:
                 return user

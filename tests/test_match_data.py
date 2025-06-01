@@ -27,3 +27,12 @@ def test_match():
     assert len(match.get_all_picks_codes()) == 10
     assert len(match.get_own_picks_codes()) == 5
     assert len(match.get_enemy_picks_codes()) == 5
+    
+    
+# Match history
+
+def test_match_history():
+    assert sum(match_history.get_match_result_vector()) >= 0
+    assert "c1153" in match_history.get_all_heroes_present_counts().keys()
+    assert match_history.get_all_own_pick_counts_by_pick_order([0]).get("c2124") >= 0
+    

@@ -1,0 +1,40 @@
+{
+    "users": [
+        {
+            "nick_no": "60089134",
+            "code": "c1123",
+            "nick_nm": "Ahnlab",
+            "rank": "70"
+        },
+        {
+            "nick_no": "60089166",
+            "code": "c2024",
+            "nick_nm": "Burn",
+            "rank": "66"
+        },
+        {
+            "nick_no": "60089368",
+            "code": "c1152",
+            "nick_nm": "Heyst",
+            "rank": "70"
+        },
+        {
+            "nick_no": "60089527",
+            "code": "c1003",
+            "nick_nm": "Rose",
+            "rank": "70"
+        },
+        {
+            "nick_no": "60089545",
+            "code": "c1090",
+            "nick_nm": "Codecs",
+            "rank": "70"
+        },
+        {
+            "nick_no": "60089645",
+            "code": "c2089",
+            "nick_nm": "Saber",
+            "rank": "70"
+        }
+    ]
+}

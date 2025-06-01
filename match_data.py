@@ -78,15 +78,18 @@ class MatchHistory:
     def __init__(self, matches:list[Match]):
         self.matches = matches
     
-    def get_match_result_vector(self) -> list[int]:
+    # Vector of boolean values representing whether nth match was won
+    def get_match_result_vector(self) -> list[bool]:
         return [match.win for match in self.matches]
     
+    # Number of games the hero was banned or picked in
     def get_all_heroes_present_counts(self) -> Counter:
         picks = []
         for match in self.matches:
             picks += match.get_own_picks_codes() + match.get_enemy_picks_codes() + list(set(match.preban_enemy_codes + match.preban_own_codes))
         return Counter(picks)
     
+    # Number of times the hero was picked on either side as the nth pick where n in pick_order
     def get_all_pick_counts_by_pick_order(self, pick_order:list[int]) -> Counter:
         picks = []
         for match in self.matches:
@@ -98,6 +101,7 @@ class MatchHistory:
                     picks += [pick.hero_code]
         return Counter(picks)
     
+    # Number of times the hero was picked on the own side as the nth pick where n in pick_order
     def get_all_own_pick_counts_by_pick_order(self, pick_order:list[int]) -> Counter:
         picks = []
         for match in self.matches:
@@ -106,6 +110,7 @@ class MatchHistory:
                     picks += [pick.hero_code]
         return Counter(picks)
     
+    # Number of times the hero was picked on the own side and won as the nth pick where n in pick_order
     def get_all_own_win_counts_by_pick_order(self, pick_order:list[int]) -> Counter:
         picks = []
         for match in self.matches:
@@ -174,6 +179,7 @@ class MatchHistory:
                 mvps.append(mvp)
         return Counter(mvps)
     
+    # How many times was a hero banned on the own team
     def get_all_own_ban_counts(self) -> Counter:
         bans = []
         for match in self.matches:
@@ -182,6 +188,7 @@ class MatchHistory:
                 bans.append(ban)
         return Counter(bans)
     
+    # How many times was a hero banned on the enemy team 
     def get_all_enemy_ban_counts(self) -> Counter:
         bans = []
         for match in self.matches:
@@ -190,6 +197,7 @@ class MatchHistory:
                 bans.append(ban)
         return Counter(bans)
     
+    # How many times was a hero banned on the own team and the match was won
     def get_all_own_ban_win_counts(self) -> Counter:
         bans = []
         for match in self.matches:
@@ -198,6 +206,7 @@ class MatchHistory:
                 bans.append(ban)
         return Counter(bans)
     
+    # How many times was a hero banned on enemy team and the match was won
     def get_all_enemy_ban_win_counts(self) -> Counter:
         bans = []
         for match in self.matches:
@@ -231,6 +240,7 @@ class MatchHistory:
                     first_picks.append(first_pick)
         return Counter(first_picks)
     
+    # How many times the player played with the target hero against different enemy heroes
     def get_matchup_counts(self, target_code:str) -> dict:
         matchups = []
         for match in self.matches:
@@ -238,6 +248,7 @@ class MatchHistory:
                 matchups += match.get_enemy_picks_codes() + ["total"]
         return Counter(matchups)
     
+    # How many times the player played with different heroes against different enemy heroes
     def get_all_matchup_counts(self) -> dict:
         matchups = {}
         for match in self.matches:
@@ -249,6 +260,7 @@ class MatchHistory:
             matchups[key] = Counter(matchups[key])
         return matchups
     
+    # How many times the player won with the target hero against different enemy heroes
     def get_matchup_win_counts(self, target_code:str) -> dict:
         matchups = []
         for match in self.matches:
@@ -256,6 +268,7 @@ class MatchHistory:
                 matchups += match.get_enemy_picks_codes() + ["total"]
         return Counter(matchups)
     
+    # How many times the player won with different heroes against different enemy heroes
     def get_all_matchup_win_counts(self) -> dict:
         matchups = {}
         for match in self.matches:
@@ -268,6 +281,7 @@ class MatchHistory:
             matchups[key] = Counter(matchups[key])
         return matchups
     
+    # How many times different heroes were played with the target hero
     def get_ally_counts(self, target_code:str) -> dict:
         allies = []
         for match in self.matches:
@@ -277,6 +291,7 @@ class MatchHistory:
                 allies += own_pick_codes[:i] + own_pick_codes[i+1:]  + ["total"]
         return Counter(allies)
     
+    # How many times different heroes were played with other heroes
     def get_all_ally_counts(self) -> dict:
         allies = {}
         for match in self.matches:
@@ -290,6 +305,7 @@ class MatchHistory:
             allies[key] = Counter(allies[key])
         return allies
     
+    # How many times different heroes were played with the target hero and the game was won
     def get_ally_win_counts(self, target_code:str) -> dict:
         allies = []
         for match in self.matches:
@@ -299,6 +315,7 @@ class MatchHistory:
                 allies += own_pick_codes[:i] + own_pick_codes[i+1:]  + ["total"]
         return Counter(allies)
     
+    # How many times different heroes were played with other heroes and the game was won
     def get_all_ally_win_counts(self) -> dict:
         allies = {}
         for match in self.matches:
@@ -311,18 +328,6 @@ class MatchHistory:
         for key in allies.keys():
             allies[key] = Counter(allies[key])
         return allies
-    
-    def get_own_ban_vector(self) -> list[int]:
-        bans = [0]*len(self.matches)
-        for i, match in enumerate(self.matches):
-            bans[i] = int(match.get_own_ban()!= "")
-        return bans
-    
-    def get_enemy_ban_vector(self) -> list[int]:
-        bans = [0]*len(self.matches)
-        for i, match in enumerate(self.matches):
-            bans[i] = int(match.get_enemy_ban()!= "")
-        return bans
     
     def get_first_pick_vector(self) -> list[int]:
         first_picks = [0]*len(self.matches)
@@ -345,6 +350,7 @@ class MatchHistory:
                     hero_vector[i] += 1
         return hero_vector
     
+    # How often were combinations of 3 different own units picked together
     def get_own_trios_picks(self):
         trios = []
         for match in self.matches:
@@ -362,6 +368,7 @@ class MatchHistory:
                           frozenset({picks[2],picks[3],picks[4]})]
         return Counter(trios)
     
+    # How often were combinations of 3 different own units picked together and the game was won
     def get_own_trios_wins(self):
         trios = []
         for match in self.matches:
