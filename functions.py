@@ -109,6 +109,16 @@ def get_hero_img(hero_code:str) -> Image:
         width, height = 112, 112
         image_array = np.zeros((height, width, 3), dtype=np.uint8)
         return Image.fromarray(image_array)
+
+def get_season_info() -> requests.Response:
+    url = "https://epic7.onstove.com/gg/gameApi/getUserInfo?world_code=world_global&nick_no=72987293&lang=en"
+    payload = {}
+    response = requests.post(url, json=payload)
+    seasons = response.json()["result_body"]["season_list"]
+    for season in seasons:
+        if season["is_now_season"] == 1:
+            return season
+    return seasons[0]
     
 def get_match_data_by_username(username:str, server:str) -> requests.Response:
     server = get_server_name(server)
