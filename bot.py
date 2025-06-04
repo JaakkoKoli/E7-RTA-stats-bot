@@ -125,7 +125,7 @@ async def shitpost(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
-        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)")       
+        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\nYouTube [EN](<https://www.youtube.com/@EpicSeven>) [JP](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)")       
 
 @tree.command(name="seasoninfo", description="Basic information about the current RTA season.")
 async def shitpost(ctx:discord.Interaction):
@@ -133,7 +133,7 @@ async def shitpost(ctx:discord.Interaction):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
         season_info = get_season_info()
-        await ctx.response.send_message(f"# {season_info['name']}\n**Start date:** {season_info["startDate"][:11]}\n**Predicted end date:** {season_info["endDate"][:11]}")
+        await ctx.response.send_message(f"# {season_info['name']}\n**Start date:** {season_info['startDate'][:11]}\n**Predicted end date:** {season_info['endDate'][:11]}")
 
 async def name_autocomplete(ctx:discord.Interaction, current:str):
     data = []
