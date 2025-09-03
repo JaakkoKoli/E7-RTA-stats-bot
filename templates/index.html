@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+
+    <div class="search-box">
+        <h2>Search for a user</h2>
+        <form method="POST" id="searchForm">
+            <input type="text" name="username" id="username" class="search-input" placeholder="Enter username..." autocomplete="off" required>
+            <div id="autocomplete" class="autocomplete-list" style="display:none;"></div>
+        </form>
+    </div>
+
+    <script>
+        const input = document.getElementById("username");
+        const list = document.getElementById("autocomplete");
+        let activeIndex = -1;
+
+        input.addEventListener("input", async () => {
+            const query = input.value;
+            if (query.length < 1) {
+                list.style.display = "none";
+                return;
+            }
+
+            try {
+                const res = await fetch(`/suggest?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                list.innerHTML = "";
+                if (data.length === 0) {
+                    list.style.display = "none";
+                    return;
+                }
+
+                data.forEach((user, i) => {
+                    const item = document.createElement("div");
+                    item.textContent = user;
+                    item.classList.add("autocomplete-item");
+
+                    item.addEventListener("click", () => {
+                        input.value = user;
+                        list.style.display = "none";
+                        document.getElementById("searchForm").submit();
+                    });
+
+                    list.appendChild(item);
+                });
+
+                list.style.display = "block";
+                activeIndex = -1;
+            } catch (err) {
+                console.error("Autocomplete fetch error:", err);
+            }
+        });
+
+        // Keyboard navigation
+        input.addEventListener("keydown", (e) => {
+            const items = list.querySelectorAll(".autocomplete-item");
+            if (items.length === 0) return;
+
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+                updateActive(items);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                updateActive(items);
+            } else if (e.key === "Enter") {
+                if (activeIndex >= 0) {
+                    e.preventDefault();
+                    items[activeIndex].click();
+                }
+            }
+        });
+
+        function updateActive(items) {
+            items.forEach(item => item.classList.remove("active"));
+            if (activeIndex >= 0) {
+                items[activeIndex].classList.add("active");
+                input.value = items[activeIndex].textContent;
+            }
+        }
+
+        // Close suggestions if clicked outside
+        document.addEventListener("click", (e) => {
+            if (!list.contains(e.target) && e.target !== input) {
+                list.style.display = "none";
+            }
+        });
+    </script>
+{% endblock %}

@@ -90,6 +90,16 @@ first_picks = matches.get_all_own_first_pick_counts()
 first_picks_all = matches.get_all_first_pick_counts()
 first_picks_wins = matches.get_all_own_first_pick_win_counts()
 
+combinations = matches.get_own_combinations_picks()
+combinations_wins = matches.get_own_combinations_wins()
+
+combinations_dict = {}
+combinations_dict_ = {}
+for i, key in enumerate(combinations.keys()):
+    combinations_dict[i] = key
+    combinations_dict_[i] = list(key)
+combinations_ = {i: combinations.get(combinations_dict[i], 0) for i in range(len(combinations.keys()))}
+combinations_wins_ = {i: combinations_wins.get(combinations_dict[i], 0) for i in range(len(combinations.keys()))}
 
 
 legend_data = {"presence": presence,
@@ -112,7 +122,10 @@ legend_data = {"presence": presence,
                "first_picks_all": first_picks_all,
                "first_picks_wins": first_picks_wins,
                "pick_vectors": legend_player_pick_vectors,
-               "individual_prebans": legend_player_prebans}
+               "individual_prebans": legend_player_prebans,
+               "combinations": combinations_,
+               "combinations_wins": combinations_wins_,
+               "combinations_keys": combinations_dict_}
 
 with open("data/legend_data.json", "w") as json_file:
     json.dump(legend_data, json_file, indent=4)

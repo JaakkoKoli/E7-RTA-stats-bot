@@ -1,19 +1,21 @@
 from dotenv import load_dotenv
-import os
-from update_data import *
 import discord
-import random
 from discord import app_commands
 from discord.ext import commands
+
+import os
+import random
 import io
+from datetime import datetime, timedelta
+
+from update_data import *
 from functions import save_image_from_url, get_match_data_by_user_id, get_season_info
 from user_data import *
 from search_history import *
 from hero_data import *
-from datetime import datetime, timedelta
+
 from sklearn.decomposition import NMF
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Check if required folder structure exists, create if not
 
@@ -125,7 +127,7 @@ async def shitpost(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
-        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)\n[Skill Multiplier Spreadsheet](<https://docs.google.com/spreadsheets/d/e/2PACX-1vRWZw_BeIhf32W9UIyPuyrr1VDeBuX6p1Nzxov4-5Pkt5DplChLovysSDN83mGVbsZ0XgYs2FICuRXA/pubhtml>)")       
+        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n[7th Anniversary event](<https://epic7.onstove.com/en/promotion/anniv/7th/part1>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)\n[Skill Multiplier Spreadsheet](<https://docs.google.com/spreadsheets/d/e/2PACX-1vRWZw_BeIhf32W9UIyPuyrr1VDeBuX6p1Nzxov4-5Pkt5DplChLovysSDN83mGVbsZ0XgYs2FICuRXA/pubhtml>)")       
 
 @tree.command(name="seasoninfo", description="Basic information about the current RTA season.")
 async def shitpost(ctx:discord.Interaction):
@@ -457,4 +459,7 @@ async def on_ready():
 async def on_command_error(ctx:discord.Interaction, error):
     await ctx.response.send_message("Unknown command")
 
-client.run(TOKEN)
+def run_bot():
+    client.run(TOKEN)
+
+run_bot()

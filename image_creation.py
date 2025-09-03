@@ -15,7 +15,7 @@ def n_lowest_winrates(counter:Counter, n:int):
     for key in counter.keys():
         counter[key] = 1 - counter[key]
     counter = Counter(counter)
-    return counter.most_common(5)
+    return counter.most_common(n)
 
 def get_predicted_winrate(picks:Counter, wins:Counter, wins_total:int, matches_total:int) -> Counter:
     winrate = {}

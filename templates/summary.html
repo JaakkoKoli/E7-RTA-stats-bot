@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Summary{% endblock %}
+{% block content %}
+
+
+<script>
+    function toggleDetails(id) {
+        const el = document.getElementById(id);
+        if (el.style.display === "block") {
+            el.style.display = "none";
+        } else {
+            el.style.display = "block";
+        }
+    }
+</script>
+
+<div class="summary-container">
+    <!-- Top Card -->
+    <div class="top-card">
+        <img src="{{ url_for('static', filename=summary.icon) }}" alt="Profile Picture" class="profile-pic">
+        <div class="user-info">
+            <h1>{{ summary.username }}</h1>
+            <div class="stats">
+                <div><strong>Total Matches in history:</strong> {{ summary.total_matches }}</div>
+                <div><strong>Wins:</strong> {{ summary.wins }}</div>
+                <div><strong>Losses:</strong> {{ summary.losses }}</div>
+                <div><strong>Win Rate:</strong> {{ summary.win_rate }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs with Graphs -->
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="rankTab">Points</button>
+            <button class="tab-btn" data-tab="bestPicksTab">Best Picks</button>
+            <button class="tab-btn" data-tab="worstPicksTab">Worst Picks</button>
+            <button class="tab-btn" data-tab="enemiesTab">Enemy picks</button>
+        </div>
+
+        <!-- Rank Over Time -->
+        <div id="rankTab" class="tab-content active">
+            <canvas id="rankChart"></canvas>
+        </div>
+
+        <div id="bestPicksTab" class="tab-content">
+            <div class="character-list">
+                {% for char in best_picks %}
+                <div class="character-card">
+                    <div class="char-header" onclick="toggleDetails('best{{ loop.index }}')">
+                        <img src="{{ url_for('static', filename='hero_images/' ~ char.icon) }}" class="char-icon"
+                            alt="{{ char.name }}">
+                        <div class="char-info">
+                            <div class="char-name">{{ char.name }}</div>
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (char.losses / (char.wins + char.losses)) * 100 }}%">
+                                    {{ char.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (char.wins / (char.wins + char.losses)) * 100 }}%">
+                                    {{ char.wins }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="char-details" id="best{{ loop.index }}">
+                        <h4>Best Allies</h4>
+                        {% for opp in char.best_allies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Worst Allies</h4>
+                        {% for opp in char.worst_allies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Best Matchups</h4>
+                        {% for opp in char.best_enemies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Worst Matchups</h4>
+                        {% for opp in char.worst_enemies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="worstPicksTab" class="tab-content">
+            <div class="character-list">
+                {% for char in worst_picks %}
+                <div class="character-card">
+                    <div class="char-header" onclick="toggleDetails('worst{{ loop.index }}')">
+                        <img src="{{ url_for('static', filename='hero_images/' ~ char.icon) }}" class="char-icon"
+                            alt="{{ char.name }}">
+                        <div class="char-info">
+                            <div class="char-name">{{ char.name }}</div>
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (char.losses / (char.wins + char.losses)) * 100 }}%">
+                                    {{ char.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (char.wins / (char.wins + char.losses)) * 100 }}%">
+                                    {{ char.wins }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="char-details" id="worst{{ loop.index }}">
+                        <h4>Best Allies</h4>
+                        {% for opp in char.best_allies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Worst Allies</h4>
+                        {% for opp in char.worst_allies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Best Matchups</h4>
+                        {% for opp in char.best_enemies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Worst Matchups</h4>
+                        {% for opp in char.worst_enemies %}
+                        <div class="opponent">
+                            <img src="{{ url_for('static', filename='hero_images/' ~ opp.icon) }}" class="opp-icon"
+                                alt="{{ opp.name }}">
+                            <div class="progress-bar">
+                                <div class="progress-losses"
+                                    style="width: {{ (opp.losses / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.losses }}
+                                </div>
+                                <div class="progress-wins"
+                                    style="width: {{ (opp.wins / (opp.wins + opp.losses)) * 100 }}%">
+                                    {{ opp.wins }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div id="enemiesTab" class="tab-content">
+        <div class="character-list">
+            <h2>Best Matchups</h2>
+            {% for char in best_enemies %}
+            <div class="character-card">
+                <div class="char-header">
+                    <img src="{{ url_for('static', filename='hero_images/' ~ char.icon) }}" class="char-icon"
+                        alt="{{ char.name }}">
+                    <div class="char-info">
+                        <div class="char-name">{{ char.name }}</div>
+                        <div class="progress-bar">
+                            <div class="progress-losses"
+                                style="width: {{ (char.losses / (char.wins + char.losses)) * 100 }}%">
+                                {{ char.losses }}
+                            </div>
+                            <div class="progress-wins"
+                                style="width: {{ (char.wins / (char.wins + char.losses)) * 100 }}%">
+                                {{ char.wins }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <h2>Worst Matchups</h2>
+            {% for char in worst_enemies %}
+            <div class="character-card">
+                <div class="char-header">
+                    <img src="{{ url_for('static', filename='hero_images/' ~ char.icon) }}" class="char-icon"
+                        alt="{{ char.name }}">
+                    <div class="char-info">
+                        <div class="char-name">{{ char.name }}</div>
+                        <div class="progress-bar">
+                            <div class="progress-losses"
+                                style="width: {{ (char.losses / (char.wins + char.losses)) * 100 }}%">
+                                {{ char.losses }}
+                            </div>
+                            <div class="progress-wins"
+                                style="width: {{ (char.wins / (char.wins + char.losses)) * 100 }}%">
+                                {{ char.wins }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabButtons = document.querySelectorAll(".tab-btn");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabButtons.forEach(b => b.classList.remove("active"));
+                tabContents.forEach(c => c.classList.remove("active"));
+                btn.classList.add("active");
+                document.getElementById(btn.dataset.tab).classList.add("active");
+            });
+        });
+
+
+        const rankCtx = document.getElementById('rankChart').getContext('2d');
+        const rankData = {
+            labels: {{ rank_history | map(attribute = "date") | list | tojson
+    }},
+        datasets: [{
+            label: 'Rank',
+            data: {{ rank_history | map(attribute = "rank") | list | tojson }},
+        borderColor: '#007BFF',
+        backgroundColor: 'rgba(0,123,255,0.2)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 6
+            }]
+        };
+
+    const rankChart = new Chart(rankCtx, {
+        type: 'line',
+        data: rankData,
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    reverse: false,
+                    title: { display: true, text: "" }
+                },
+                x: {
+                    reverse: true,
+                    title: { display: true, text: "" }
+                }
+            }
+        }
+    });
+    });
+</script>
+
+{% endblock %}

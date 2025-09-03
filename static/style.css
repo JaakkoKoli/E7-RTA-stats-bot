@@ -1,0 +1,390 @@
+.content {
+    padding: 80px 20px 20px;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #222;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.summary-container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 1000px;
+    width: 100%;
+}
+body.dark .summary-container {
+    background: #4b4b4b;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+
+/* Top Card Layout */
+.top-card {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #f5f5f5;
+}
+
+body.dark .top-card {
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #ddd;
+    margin-right: 30px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border: 4px solid #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .profile-pic {
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-info h1 {
+    margin: 0 0 15px;
+    font-size: 26px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 30px;
+    font-size: 18px;
+}
+
+/* Tabs */
+.tab-container {
+    margin-top: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-buttons button {
+    background: #82bfff;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+body.dark .tab-buttons button {
+    background: #3e628a;
+}
+
+.tab-buttons button.active {
+    background: #225b97;
+    color: white;
+}
+
+body.dark .tab-buttons button.active {
+    background: #002955;
+}
+
+body.dark .tab-buttons button:hover {
+    background: #0c3968;
+}
+body.dark .tab-buttons button.active:hover {
+    background: #002955;
+}
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+canvas {
+    max-width: 100%;
+}
+
+.character-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.character-card {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .character-card{
+    background: #2a2a2a;
+}
+
+.char-header {
+    display: flex;
+    align-items: center;
+}
+
+.char-icon,
+.opp-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.char-info {
+    flex-grow: 1;
+}
+
+.char-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.progress-bar {
+    display: flex;
+    width: 100%;
+    height: 24px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ccc;
+    /* fallback background */
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
+.progress-losses {
+    background: #e74c3c;
+    /* red */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark .progress-losses{
+    background: #85332a;
+}
+
+.progress-wins {
+    background: #2ecc71;
+    /* green */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark .progress-wins{
+    background: #2e8b55;
+}
+
+.progress-fill {
+    height: 100%;
+    line-height: 20px;
+    color: white;
+    text-align: center;
+    font-size: 12px;
+}
+
+.char-details {
+    margin-top: 15px;
+    display: none;
+    padding-left: 55px;
+}
+
+.opponent {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.search-box {
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    width: 350px;
+}
+
+body.dark .search-box{
+    background: #2a2a2a;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 0px;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+body.dark .autocomplete-list{
+    background: #2a2a2a;
+}
+
+.autocomplete-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: #007BFF;
+    color: white;
+}
+
+body.dark .autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: #0c3968;
+}
+
+button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.navbar {
+    background: #2c3e50;
+    padding: 12px 24px;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between; /* logo left, links center, toggle right */
+    align-items: stretch;           /* make children fill full navbar height */
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 50px; /* fixed navbar height */
+}
+
+.nav-logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center; /* vertically center */
+    padding: 0 16px;
+}
+
+/* Center links as "full-height" buttons */
+.nav-links {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: stretch; /* children = full height */
+}
+
+.nav-links a {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.nav-links a:hover {
+    background: rgba(255,255,255,0.15); /* full-height hover effect */
+}
+
+/* Dark mode toggle styled like links */
+.dark-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+    max-width: 100px;
+}
+
+.dark-toggle:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+
+/* Dark mode */
+body.dark {
+    background: #1e1e1e;
+    color: #ddd;
+}
+
+body.dark .navbar {
+    background: #111;
+    color: #eee;
+}
+
+body.dark .nav-links a {
+    color: #eee;
+}
+
+body.dark .nav-links a:hover {
+    color: #1abc9c;
+}

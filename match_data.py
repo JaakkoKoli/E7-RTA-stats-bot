@@ -350,6 +350,64 @@ class MatchHistory:
                     hero_vector[i] += 1
         return hero_vector
     
+    def get_own_combinations_picks(self):
+        combinations = []
+        for match in self.matches:
+            picks = match.get_own_picks_codes()
+            if len(picks) == 5:
+                combinations += [frozenset({picks[0]}), 
+                          frozenset({picks[1]}), 
+                          frozenset({picks[2]}), 
+                          frozenset({picks[3]}), 
+                          frozenset({picks[4]}), 
+                          frozenset({picks[0],picks[2]}), 
+                          frozenset({picks[0],picks[3]}), 
+                          frozenset({picks[1],picks[3]}), 
+                          frozenset({picks[0],picks[1]}), 
+                          frozenset({picks[1],picks[2]}), 
+                          frozenset({picks[2],picks[3]}), 
+                          frozenset({picks[3],picks[4]}), 
+                          frozenset({picks[0],picks[1],picks[2]}), 
+                          frozenset({picks[0],picks[1],picks[3]}),
+                          frozenset({picks[0],picks[1],picks[4]}),
+                          frozenset({picks[0],picks[2],picks[3]}),
+                          frozenset({picks[0],picks[2],picks[4]}),
+                          frozenset({picks[0],picks[3],picks[4]}),
+                          frozenset({picks[1],picks[2],picks[3]}),
+                          frozenset({picks[1],picks[2],picks[4]}),
+                          frozenset({picks[1],picks[3],picks[4]}),
+                          frozenset({picks[2],picks[3],picks[4]})]
+        return Counter(combinations)
+    
+    def get_own_combinations_wins(self):
+        combinations = []
+        for match in self.matches:
+            picks = match.get_own_picks_codes()
+            if len(picks) == 5 and match.win:
+                combinations += [frozenset({picks[0]}), 
+                          frozenset({picks[1]}), 
+                          frozenset({picks[2]}), 
+                          frozenset({picks[3]}), 
+                          frozenset({picks[4]}), 
+                          frozenset({picks[0],picks[2]}), 
+                          frozenset({picks[0],picks[3]}), 
+                          frozenset({picks[1],picks[3]}), 
+                          frozenset({picks[0],picks[1]}), 
+                          frozenset({picks[1],picks[2]}), 
+                          frozenset({picks[2],picks[3]}), 
+                          frozenset({picks[3],picks[4]}), 
+                          frozenset({picks[0],picks[1],picks[2]}), 
+                          frozenset({picks[0],picks[1],picks[3]}),
+                          frozenset({picks[0],picks[1],picks[4]}),
+                          frozenset({picks[0],picks[2],picks[3]}),
+                          frozenset({picks[0],picks[2],picks[4]}),
+                          frozenset({picks[0],picks[3],picks[4]}),
+                          frozenset({picks[1],picks[2],picks[3]}),
+                          frozenset({picks[1],picks[2],picks[4]}),
+                          frozenset({picks[1],picks[3],picks[4]}),
+                          frozenset({picks[2],picks[3],picks[4]})]
+        return Counter(combinations)
+    
     # How often were combinations of 3 different own units picked together
     def get_own_trios_picks(self):
         trios = []

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-logo"></a>
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">Search</a>
+                <a href="{{ url_for('legenddata') }}">Legend Data</a>
+            </div>
+            <button id="darkModeToggle" class="dark-toggle">🌙</button>
+        </div>
+    </nav>
+
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggle = document.getElementById("darkModeToggle");
+            const body = document.body;
+
+            // Load saved theme
+            if (localStorage.getItem("theme") === "dark") {
+                body.classList.add("dark");
+            }
+
+            toggle.addEventListener("click", () => {
+                body.classList.toggle("dark");
+                if (body.classList.contains("dark")) {
+                    localStorage.setItem("theme", "dark");
+                    toggle.textContent = "☀️";
+                } else {
+                    localStorage.setItem("theme", "light");
+                    toggle.textContent = "🌙";
+                }
+            });
+
+            // Set initial icon
+            toggle.textContent = body.classList.contains("dark") ? "☀️" : "🌙";
+        });
+    </script>
+
+</body>
+
+</html>
