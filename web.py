@@ -1,6 +1,4 @@
 import os
-import random
-import io
 from datetime import datetime, timedelta
 
 from update_data import *
@@ -9,6 +7,7 @@ from user_data import *
 from search_history import *
 from hero_data import *
 from match_data import *
+from resource_handler import *
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from sklearn.decomposition import NMF
@@ -38,16 +37,10 @@ hero_popularity = HeroPopularity()
 if os.path.isfile("data/hero_popularity.json"):
     hero_popularity.load_popularity()
 
-get_new_heroname_json()
-with open("data/heronames.json", "r") as json_file:
-    hero_list = HeroList(json.load(json_file))
-hero_dict = hero_list.get_hero_vector_dict()
+resource_handler = ResourceHandler(image_location="static/hero_images/")
 
-current_hero_image_codes = [f.split(".")[0] for f in os.listdir("static/hero_images") if os.path.isfile(os.path.join("static/hero_images", f))]
-for herocode in hero_list.hero_code_list:
-    if herocode not in current_hero_image_codes:
-        image_url = 'https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png'.format(herocode)
-        save_image_from_url(image_url, 'static/hero_images/{}.png'.format(herocode))
+hero_list = resource_handler.hero_list
+hero_dict = hero_list.get_hero_vector_dict()
 
 current_rank_images = [f.split(".")[0] for f in os.listdir("static/rank_icons") if os.path.isfile(os.path.join("static/rank_icons", f))]
 for rank in ["bronze", "silver", "gold", "master", "challenger", "champion", "warlord", "emperor", "legend"]:

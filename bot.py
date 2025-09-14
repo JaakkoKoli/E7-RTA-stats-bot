@@ -11,8 +11,10 @@ from datetime import datetime, timedelta
 from update_data import *
 from functions import save_image_from_url, get_match_data_by_user_id, get_season_info
 from user_data import *
+from image_creation import *
 from search_history import *
 from hero_data import *
+from resource_handler import *
 
 from sklearn.decomposition import NMF
 import numpy as np
@@ -36,17 +38,10 @@ hero_popularity = HeroPopularity()
 if os.path.isfile("data/hero_popularity.json"):
     hero_popularity.load_popularity()
 
-get_new_heroname_json()
-with open("data/heronames.json", "r") as json_file:
-    hero_list = HeroList(json.load(json_file))
+resource_handler = ResourceHandler()
+
+hero_list = resource_handler.hero_list
 hero_dict = hero_list.get_hero_vector_dict()
-
-current_hero_image_codes = [f.split(".")[0] for f in os.listdir("hero_images") if os.path.isfile(os.path.join("hero_images", f))]
-for herocode in hero_list.hero_code_list:
-    if herocode not in current_hero_image_codes:
-        image_url = 'https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png'.format(herocode)
-        save_image_from_url(image_url, 'hero_images/{}.png'.format(herocode))
-
 
 # Load and update user data, and create a search index
 user_data = UserData()
@@ -64,6 +59,8 @@ user_data.load_points(points.points)
 search_history = SearchHistory()
 if os.path.exists("data/search_history.json"):
     search_history.load_search_history()
+    
+image_creation = ImageCreation(resource_handler, user_data)
 
 def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
     with open("data/legend_data.json", "r") as json_file:
@@ -190,7 +187,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         if user is not None:
             try:
                 await ctx.response.defer()
-                image, matches = create_match_summary_image(user.id, user.server, hero_list, darkmode)
+                image, matches = image_creation.create_match_summary_image(user, darkmode)
                 if image is not None:
                     match_result_vector = matches.get_match_result_vector()
                     first_pick_vector = matches.get_first_pick_vector()
@@ -249,7 +246,7 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, darkmode:str=
         try:
             await ctx.response.defer()
             target_hero = hero_list.get_hero_by_name(hero)
-            image, picks, wins, matches = create_hero_analysis_image(user.id, user.server, target_hero.code, hero_list, darkmode)
+            image, picks, wins, matches = image_creation.create_hero_analysis_image(user, target_hero.code, darkmode)
             if image is not None:
                 points.points[str(user.id)] = int(matches.matches[0].points)
                 user.points = int(matches.matches[0].points)
@@ -285,7 +282,7 @@ async def trios(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
             user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
-            image, matches = create_trios_image(user.id, user.server, hero_list, darkmode)
+            image, matches = image_creation.create_trios_image(user, darkmode)
             
             points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
@@ -315,7 +312,7 @@ async def bans(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
             user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
-            image, matches = create_ban_summary_image(user.id, user.server, hero_list, darkmode)
+            image, matches = image_creation.create_ban_summary_image(user, darkmode)
             
             points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
@@ -345,7 +342,7 @@ async def legendstats(ctx:discord.Interaction, darkmode:str="on"):
             global legend_data, legend_data_update_time, nmf, transformed_legend_picks
             if twelve_hours_from_last_update(legend_data_update_time):
                 legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
-            image = create_legend_data_summary_image(legend_data, darkmode)
+            image = image_creation.create_legend_data_summary_image(legend_data, darkmode)
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
@@ -372,7 +369,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
             if twelve_hours_from_last_update(legend_data_update_time):
                 legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
             target_hero = hero_list.get_hero_by_name(hero)
-            image, success = create_legend_data_image_one_hero(target_hero.code, target_hero.name, legend_data, darkmode)
+            image, success = image_creation.create_legend_data_image_one_hero(target_hero.code, target_hero.name, legend_data, darkmode)
             if success:
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')

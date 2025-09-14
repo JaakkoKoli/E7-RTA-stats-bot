@@ -1,4 +1,6 @@
 import json
+import requests
+from match_data import *
 
 class User:
     def __init__(self, id:int, name:str, level:int, profile_hero_code:str, server:str):
@@ -31,6 +33,14 @@ class User:
         if isinstance(user2, User):
             return self.get_name_with_server() < user2.get_name_with_server()
         return self.get_name_with_server() < user2
+    
+    def get_match_data(self, hero_list) -> requests.Response:
+        response = requests.post(f"https://epic7.gg.onstove.com/gameApi/getBattleList?nick_no={self.id}&world_code=world_{self.server}&lang=en&season_code=", json={})
+        matches = MatchHistory([])
+        if response.status_code == 200:
+            match_list = response.json()["result_body"]["battle_list"]
+            matches = MatchHistory([Match(match, hero_list) for match in match_list])
+        return matches
         
 
 class UserData:
