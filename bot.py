@@ -9,7 +9,7 @@ import io
 from datetime import datetime, timedelta
 
 from update_data import *
-from functions import save_image_from_url, get_match_data_by_user_id, get_season_info
+from functions import get_match_data_by_user_id, get_season_info
 from user_data import *
 from image_creation import *
 from search_history import *
