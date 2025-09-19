@@ -331,6 +331,8 @@ class ImageCreation:
     def create_legend_data_summary_image(self, legend_data:dict, darkmode:bool=False) -> np.ndarray:
         presence = Counter(legend_data["presence"])
 
+        match_results = legend_data["match_result_vector"]
+        
         picks = Counter(legend_data["picks"])
         wins = Counter(legend_data["wins"])
 
@@ -358,7 +360,7 @@ class ImageCreation:
         winrate_prebans = self.get_predicted_winrate(prebans, prebans_wins, int(sum(prebans_wins.values())/5), int(sum(prebans.values())/5))
         winrate_first_picks = self.get_predicted_winrate(first_picks, first_picks_wins, int(sum(first_picks_wins.values())/5), int(sum(first_picks.values())/5))
 
-        n_games = sum(picks.values())/5
+        n_games = len(match_results)
         
         fig, axes = plt.subplots(nrows=8, ncols=6, figsize=(10, 10), gridspec_kw={'width_ratios': [1.8, 1, 1, 1, 1, 1]})
         fig.subplots_adjust(hspace=1)

@@ -18,6 +18,8 @@ class Match:
         self.read_match_data(match_data, hero_data)
         
     def read_match_data(self, match_data:object, hero_data:HeroList) -> None:
+        self.match_id:int = int(match_data["battle_seq"])
+        self.season:str = match_data["season_code"]
         for i, hero in enumerate(match_data["my_deck"]["hero_list"]):
             self.picks_own.append(Pick(hero, i, hero_data))
             
@@ -77,6 +79,15 @@ class MatchHistory:
     
     def __init__(self, matches:list[Match]):
         self.matches = matches
+    
+    def remove_duplicates(self) -> None:
+        new_matches = []
+        match_ids = []
+        for match in self.matches:
+            if match.match_id not in match_ids:
+                match_ids.append(match.match_id)
+                new_matches.append(match)
+        self.matches = new_matches
     
     # Vector of boolean values representing whether nth match was won
     def get_match_result_vector(self) -> list[bool]:

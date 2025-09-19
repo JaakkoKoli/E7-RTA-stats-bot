@@ -136,10 +136,6 @@ def user_summary(username, server):
         matches_n = len(match_result_vector)
         wins_n = sum(match_result_vector)
         
-        prebans = matches.get_all_own_preban_counts()
-        first_picks = matches.get_all_own_first_pick_counts()
-        picks = matches.get_all_own_pick_counts()
-        wins = matches.get_all_own_pick_win_counts()
         enemy_picks = matches.get_all_enemy_pick_counts()
         enemy_wins = matches.get_all_enemy_pick_win_against_counts()
         matchups = matches.get_all_matchup_counts()
@@ -270,9 +266,7 @@ def user_summary(username, server):
 @app.route("/suggest")
 def suggest():
     query = request.args.get("q", "").lower()
-    print(query)
     suggestions = name_autocomplete(query)
-    print(suggestions)
     return jsonify(suggestions)
 
 @app.route("/legenddata")
@@ -282,7 +276,8 @@ def legenddata():
         legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
         
     presence = Counter(legend_data["presence"])
-
+    match_results = legend_data["match_result_vector"]
+    
     picks = Counter(legend_data["picks"])
     wins = Counter(legend_data["wins"])
 
@@ -296,11 +291,9 @@ def legenddata():
     late_picks_wins = Counter(legend_data["late_picks_wins"])
 
     prebans = Counter(legend_data["prebans"])
-    prebans_all = Counter(legend_data["prebans_all"])
     prebans_wins = Counter(legend_data["prebans_wins"])
 
     first_picks = Counter(legend_data["first_picks"])
-    first_picks_all = Counter(legend_data["first_picks_all"])
     first_picks_wins = Counter(legend_data["first_picks_wins"])
     
     winrate = get_predicted_winrate(picks, wins, int(sum(wins.values())/5), int(sum(picks.values())/5))
@@ -310,8 +303,8 @@ def legenddata():
     winrate_prebans = get_predicted_winrate(prebans, prebans_wins, int(sum(prebans_wins.values())/5), int(sum(prebans.values())/5))
     winrate_first_picks = get_predicted_winrate(first_picks, first_picks_wins, int(sum(first_picks_wins.values())/5), int(sum(first_picks.values())/5))
 
-    n_games = int(sum(picks.values())/5)
-    n_wins = int(sum(wins.values())/5)
+    n_games = len(match_results)
+    n_wins = sum(match_results)
     
     def create_picks_list(picks, wins, winrate, n):
         result = {

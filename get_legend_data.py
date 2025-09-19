@@ -10,14 +10,15 @@ if not os.path.exists("data"):
 
 def get_legend_players() -> tuple[list[int], list[str]]:
     responses = []
+    current_season_code = get_season_info()['season_code']
     try:
         for i in range(10):
             response = requests.post(
-            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss17&world_code=all&current_page={i+1}&lang=en"
+            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code={current_season_code}&world_code=all&current_page={i+1}&lang=en"
             )
             if len(response.json()["result_body"]) == 0:
                 response = requests.post(
-                f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss16&world_code=all&current_page={i+1}&lang=en"
+                f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss17&world_code=all&current_page={i+1}&lang=en"
                 )
             if response.status_code == 200:
                 responses += [response.json()]
@@ -63,8 +64,11 @@ for i in range(len(match_list)):
     legend_player_prebans[legend_player_dict[str(i)]] = {x[0]: x[1] for x in matches.get_all_own_preban_counts().most_common(3)}
 
 matches = MatchHistory([Match(match, hero_list) for match in match_list_all])
+matches.remove_duplicates()
 
 presence = matches.get_all_heroes_present_counts()
+
+match_results = matches.get_match_result_vector()
 
 picks = matches.get_all_own_pick_counts()
 picks_all = matches.get_all_pick_counts()
@@ -102,7 +106,8 @@ combinations_ = {i: combinations.get(combinations_dict[i], 0) for i in range(len
 combinations_wins_ = {i: combinations_wins.get(combinations_dict[i], 0) for i in range(len(combinations.keys()))}
 
 
-legend_data = {"presence": presence,
+legend_data = {"match_result_vector": match_results,
+               "presence": presence,
                "picks": picks,
                "picks_all": picks_all,
                "wins": wins,
