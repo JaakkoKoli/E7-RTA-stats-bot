@@ -23,9 +23,10 @@ class ResourceHandler:
     def get_hero_image(self, hero_code:str) -> Image:
         if hero_code not in self.image_codes and self.twelve_hours_from_last_update():
             if self.download_hero_list():
-                self.hero_list = self.get_hero_list()
+                self.hero_list = self.read_hero_list()
                 if self.download_hero_image(hero_code):
                     self.image_codes = self.get_current_hero_image_codes()
+            self.update_timestamp = datetime.now()
         try:
             return Image.open(f"{self.image_location}{hero_code}.png").convert("RGBA")
         except Exception as e:
