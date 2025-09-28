@@ -6,7 +6,7 @@ from discord.ext import commands
 import os
 import random
 import io
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from update_data import *
 from functions import get_match_data_by_user_id, get_season_info
@@ -89,6 +89,65 @@ if os.path.isfile("pooguilds.txt"):
             values = line.strip().split(', ')
             pooguild_set.update(values)
 
+def add_n_weeks(time:datetime, n:int) -> datetime:
+    i = 1
+    now = datetime.now()
+    while time + timedelta(days=7*n*i) < now:
+        i += 1
+    return time + timedelta(days=7*n*i)
+
+def get_next_month_time() -> datetime:
+    now = datetime.now(timezone.utc)
+    return datetime.fromtimestamp(now.replace(month=(now.month+1)%12, day=1, hour=3, minute=0, second=0, microsecond=0).timestamp())
+
+def get_next_hour(hour:int) -> datetime:
+    now = datetime.now(timezone.utc)
+    if now.hour >= hour:
+        return (now + timedelta(days=1)).replace(hour=hour, minute=0, second=0, microsecond=0)
+    return now.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+def get_asia_reset_time(time:datetime)->datetime:
+    if datetime.now() < time - timedelta(hours=9):
+        return time - timedelta(hours=9)
+    return time + timedelta(hours=15)
+
+def get_global_reset_time(time:datetime)->datetime:
+    if datetime.now() < time + timedelta(hours=7):
+        return time + timedelta(hours=7)
+    return time - timedelta(hours=17)
+
+def get_next_time(base:datetime, interval:timedelta) -> datetime:
+    now = datetime.now()
+    time = base
+    while time <= now:
+        time += interval
+    return time
+
+def get_next_artifact_shop_rotation() -> datetime:
+    base = datetime.fromtimestamp(1758164400)
+    six_weeks = timedelta(days=42)
+    return get_next_time(base, six_weeks)
+
+def get_next_maintenance_time() -> datetime:
+    base = datetime.fromtimestamp(1759978800)
+    two_weeks = timedelta(days=14)
+    return get_next_time(base, two_weeks)
+
+def get_next_sidestory_time() -> datetime:
+    base = datetime.fromtimestamp(1759374000)
+    two_weeks = timedelta(days=14)
+    return get_next_time(base, two_weeks)
+
+def get_next_hot_reset_time() -> datetime:
+    base = datetime.fromtimestamp(1759114800)
+    two_weeks = timedelta(days=14)
+    return get_next_time(base, two_weeks)
+    
+def get_next_automaton_tower_reset_time() -> datetime:
+    base = datetime.fromtimestamp(1759719600)
+    two_weeks = timedelta(days=14)
+    return get_next_time(base, two_weeks)
+
 # Bot setup
 
 intents = discord.Intents.default()
@@ -120,11 +179,20 @@ async def shitpost(ctx:discord.Interaction):
         await ctx.response.send_message(response)
 
 @tree.command(name="links", description="List of useful links.")
-async def shitpost(ctx:discord.Interaction):
+async def links(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
-        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n[7th Anniversary event](<https://epic7.onstove.com/en/promotion/anniv/7th/part1>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)\n[Skill Multiplier Spreadsheet](<https://docs.google.com/spreadsheets/d/e/2PACX-1vRWZw_BeIhf32W9UIyPuyrr1VDeBuX6p1Nzxov4-5Pkt5DplChLovysSDN83mGVbsZ0XgYs2FICuRXA/pubhtml>)")       
+        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)\n[Skill Multiplier Spreadsheet](<https://docs.google.com/spreadsheets/d/e/2PACX-1vRWZw_BeIhf32W9UIyPuyrr1VDeBuX6p1Nzxov4-5Pkt5DplChLovysSDN83mGVbsZ0XgYs2FICuRXA/pubhtml>)")       
+
+@tree.command(name="timers", description="Timers for different activities.")
+async def timers(ctx:discord.Interaction):
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
+    else:
+        response = f"# Regular Content\nServer reset times: Global <t:{int(get_next_hour(10).timestamp())}:R> - Europe: <t:{int(get_next_hour(3).timestamp())}:R> - Asia, Japan, Korea: <t:{int(get_next_hour(18).timestamp())}:R>\nAutomaton Tower: Global <t:{int(get_global_reset_time(get_next_automaton_tower_reset_time()).timestamp())}:R> - Europe <t:{int(get_next_automaton_tower_reset_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_automaton_tower_reset_time()).timestamp())}:R>\nHall of Trials: Global <t:{int(get_global_reset_time(get_next_hot_reset_time()).timestamp())}:R> - Europe <t:{int(get_next_hot_reset_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_hot_reset_time()).timestamp())}:R>\nBiweekly sidestory: <t:{int(get_next_sidestory_time().timestamp())}:R>\nMaintenance: <t:{int(get_next_maintenance_time().timestamp())}:R>\nExpeditions: Global <t:{int(get_global_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Europe <t:{int((get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R>\nTrial of Constellations: Global <t:{int(get_global_reset_time(get_next_month_time()).timestamp())}:R> - Europe <t:{int(get_next_month_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time()).timestamp())}:R>\n\n# Shops \nCoin shops: <t:{int(get_next_month_time().timestamp())}:R>\nPowder shop: <t:{int(get_next_artifact_shop_rotation().timestamp())}:R>"
+        await ctx.response.send_message(response)       
+
 
 @tree.command(name="seasoninfo", description="Basic information about the current RTA season.")
 async def shitpost(ctx:discord.Interaction):
