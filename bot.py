@@ -107,14 +107,10 @@ def get_next_hour(hour:int) -> datetime:
     return now.replace(hour=hour, minute=0, second=0, microsecond=0)
 
 def get_asia_reset_time(time:datetime)->datetime:
-    if datetime.now() < time - timedelta(hours=9):
-        return time - timedelta(hours=9)
-    return time + timedelta(hours=15)
+    return time - timedelta(hours=9)
 
 def get_global_reset_time(time:datetime)->datetime:
-    if datetime.now() < time + timedelta(hours=7):
-        return time + timedelta(hours=7)
-    return time - timedelta(hours=17)
+    return time + timedelta(hours=7)
 
 def get_next_time(base:datetime, interval:timedelta) -> datetime:
     now = datetime.now()
