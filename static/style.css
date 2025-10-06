@@ -1,3 +1,22 @@
+:root {
+    --font: black;
+    --font_d: #ddd;
+    --col0: #2c3e50;
+    --col1: white;
+    --col2: #f5f5f5;
+    --col0_d: #111;
+    --col1_d: #1e1e1e;
+    --col2_d: #4b4b4b;
+    --btn1: #82bfff;
+    --btn2: #225b97;
+    --btn1_d: #3e628a;
+    --btn2_d: #002955;
+    --red: #e74c3c;
+    --red_d: #85332a;
+    --green: #2ecc71;
+    --green_d: #2e8b55;
+}
+
 .content {
     padding: 80px 20px 20px;
 }
@@ -22,9 +41,10 @@ body {
     max-width: 1000px;
     width: 100%;
 }
+
 body.dark .summary-container {
     background: #4b4b4b;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 
@@ -40,7 +60,7 @@ body.dark .summary-container {
 
 body.dark .top-card {
     background: #2a2a2a;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .profile-pic {
@@ -57,7 +77,7 @@ body.dark .top-card {
 
 body.dark .profile-pic {
     background: #2a2a2a;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .user-info {
@@ -113,9 +133,11 @@ body.dark .tab-buttons button.active {
 body.dark .tab-buttons button:hover {
     background: #0c3968;
 }
+
 body.dark .tab-buttons button.active:hover {
     background: #002955;
 }
+
 .tab-content {
     display: none;
 }
@@ -141,7 +163,7 @@ canvas {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-body.dark .character-card{
+body.dark .character-card {
     background: #2a2a2a;
 }
 
@@ -190,7 +212,7 @@ body.dark .character-card{
     justify-content: center;
 }
 
-body.dark .progress-losses{
+body.dark .progress-losses {
     background: #85332a;
 }
 
@@ -202,7 +224,7 @@ body.dark .progress-losses{
     justify-content: center;
 }
 
-body.dark .progress-wins{
+body.dark .progress-wins {
     background: #2e8b55;
 }
 
@@ -236,7 +258,7 @@ body.dark .progress-wins{
     width: 350px;
 }
 
-body.dark .search-box{
+body.dark .search-box {
     background: #2a2a2a;
 }
 
@@ -261,7 +283,7 @@ body.dark .search-box{
     z-index: 1000;
 }
 
-body.dark .autocomplete-list{
+body.dark .autocomplete-list {
     background: #2a2a2a;
 }
 
@@ -301,7 +323,7 @@ button:hover {
     background: #2c3e50;
     padding: 12px 24px;
     color: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     position: fixed;
     top: 0;
     left: 0;
@@ -311,11 +333,14 @@ button:hover {
 
 .nav-container {
     display: flex;
-    justify-content: space-between; /* logo left, links center, toggle right */
-    align-items: stretch;           /* make children fill full navbar height */
+    justify-content: space-between;
+    /* logo left, links center, toggle right */
+    align-items: stretch;
+    /* make children fill full navbar height */
     max-width: 1200px;
     margin: 0 auto;
-    height: 50px; /* fixed navbar height */
+    height: 50px;
+    /* fixed navbar height */
 }
 
 .nav-logo {
@@ -324,7 +349,8 @@ button:hover {
     color: white;
     text-decoration: none;
     display: flex;
-    align-items: center; /* vertically center */
+    align-items: center;
+    /* vertically center */
     padding: 0 16px;
 }
 
@@ -333,7 +359,8 @@ button:hover {
     display: flex;
     flex: 1;
     justify-content: center;
-    align-items: stretch; /* children = full height */
+    align-items: stretch;
+    /* children = full height */
 }
 
 .nav-links a {
@@ -347,7 +374,8 @@ button:hover {
 }
 
 .nav-links a:hover {
-    background: rgba(255,255,255,0.15); /* full-height hover effect */
+    background: rgba(255, 255, 255, 0.15);
+    /* full-height hover effect */
 }
 
 /* Dark mode toggle styled like links */
@@ -366,7 +394,7 @@ button:hover {
 }
 
 .dark-toggle:hover {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 
@@ -387,4 +415,208 @@ body.dark .nav-links a {
 
 body.dark .nav-links a:hover {
     color: #1abc9c;
+}
+
+.tierlist {
+    flex: 2;
+    padding: 10px;
+}
+
+.tier-dropzone img,
+#image-pool img {
+    width: 50px;
+    height: 50px;
+    cursor: grab;
+}
+
+#tier-rows{
+    padding: 10px;
+    border: 1px solid #4b4b4b;
+}
+
+body.dark #tier-rows{
+    padding: 10px;
+    border: 1px solid #eee;
+}
+
+.tier-row {
+    display: flex;
+    align-items: stretch;
+    /* force children to same height */
+    margin-bottom: 10px;
+    background: var(--col2);
+    padding: 5px;
+}
+
+body.dark .tier-row {
+    background: var(--col2_d);
+}
+
+
+.tier-label {
+    width: 80px;
+    min-width: 80px;
+    font-size: 48px;
+    margin-right: 10px;
+    cursor: text;
+    padding: 4px;
+}
+
+.tier-dropzone {
+    flex: 1;
+    min-height: 60px;
+    border: 2px dashed #aaa;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-content: flex-start;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.dark .tier-dropzone {
+    border: 2px dashed #dadada;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.row-label {
+    min-width: 80px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.row-dropzone {
+    flex: 1;
+    min-height: 60px;
+    border: 2px dashed #aaa;
+    border-radius: 6px;
+    padding: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.row-dropzone body.dark {
+    border: 2px dashed #dadada;
+}
+
+.char-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px;
+    cursor: grab;
+}
+
+.char-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    border: 2px solid #333;
+}
+
+.filter-section {
+    margin-bottom: 30px;
+}
+
+.filter-row {
+  display: block;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  margin-right: 50px;
+}
+
+.filter-row button {
+  border: none;
+  color: var(--font);
+  flex: 0 0 auto;
+  background: none;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  border-radius: 6px;
+  height: 40px;
+  min-width: 25px;
+  max-width: 40px;
+  transition: background 0.2s;
+}
+
+body.dark .filter-row button {
+  color: var(--font_d);
+}
+
+.filter-row button.active {
+  color: var(--font);
+  background: #00000020;
+}
+
+body.dark .filter-row button.active {
+  background: #ffffff20;
+  color: white;
+}
+
+.filter-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  pointer-events: none; /* don’t block clicks */
+}
+
+.export-import {
+    margin-top: 20px;
+}
+
+.export-import textarea,
+.export-import input {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+.delete-row {
+    width: 24px;
+    height: 24px;
+    line-height: 22px;
+    font-size: 14px;
+    margin-left: 8px;
+    padding: 0;
+    text-align: center;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-row:hover {
+    background: var(--red_d);
+}
+
+/* Image pool fills available vertical space */
+.tierlist-container {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    min-height: 400px;
+    width: 90vw;
+}
+
+/* Right side: fill height of container */
+.image-pool {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    min-height: 100%;
+    gap: 10px;
+    min-width: 33%;
+}
+
+/* Filters stay at top */
+.image-pool .filter-row {
+    flex-shrink: 0;
+}
+
+
+#image-pool body.dark {
+    border: 1px dashed #dadada;
 }

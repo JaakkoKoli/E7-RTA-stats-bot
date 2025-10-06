@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tierlist-container">
+  <!-- Left side: Tier List -->
+  <div class="tierlist">
+    <!-- Filters for highlighting -->
+    <div class="filter-row">
+      <div id="tier-class-filters"></div>
+    </div>
+    <div class="filter-row">
+      <div id="tier-element-filters"></div>
+    </div>
+
+    <div id="tier-rows">
+      <div class="tier-row">
+        <span class="tier-label" contenteditable="true">S</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>
+      </div>
+      <div class="tier-row">
+        <span class="tier-label" contenteditable="true">A</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>
+      </div>
+      <div class="tier-row">
+        <span class="tier-label" contenteditable="true">B</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>
+      </div>
+      <div class="tier-row">
+        <span class="tier-label" contenteditable="true">C</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>
+      </div>
+      <div class="tier-row">
+        <span class="tier-label" contenteditable="true">D</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>
+      </div>
+    </div>
+
+    <button id="add-row" style="max-width:350px;">+ Add Row</button>
+
+    <!-- Import/Export -->
+    <div style="margin-top:20px;display:block;">
+      <textarea id="export-code" style="width: 400px;height: 50px;margin-right: 50px;" readonly placeholder="Exported code will appear here"></textarea>
+      <button id="export-btn" style="width: 300px;height: 50px;">Export tier list</button>
+    </div>
+    <div style="margin-top:20px;display:block;">
+      <textarea id="import-code" style="width: 400px;height: 50px;margin-right: 50px;" placeholder="Paste code to import"></textarea>
+      <button id="import-btn" style="width: 300px;height: 50px;">Import tier list</button>
+    </div>
+
+    <div style="margin-top:20px;display:block;">
+      <textarea id="import-highlights" style="width: 400px;height: 50px;margin-right: 50px;" placeholder="Paste code for custom highlights"></textarea>
+      <button id="import-highlights-btn" style="width: 300px;height: 50px;">Use highlights</button>
+    </div>
+    <div style="margin-top:20px;display:block;">
+      <textarea id="current-highlights" style="width: 400px;height: 50px;margin-right: 50px;" readonly placeholder="Code for highlights will appear here"></textarea>
+      <button id="export-highlights-btn" style="width: 300px;height: 50px;">Get highlights</button>
+    </div>
+  </div>
+
+  <!-- Right side: Image pool -->
+  <div class="image-pool">
+    <div class="filter-row">
+        <div id="class-filters"></div>
+        <div id="element-filters"></div>
+    </div>
+        <div id="image-pool"></div> <!-- empty area stays visible -->
+    </div>
+</div>
+
+<script>
+// === TEST DATA ===
+const characters = {{ characters|tojson }};
+
+var custom_highlights = [characters.map(c=>c.code)]
+
+const classes = ["all", ...new Set(characters.map(c => c.class))];
+const elements = ["all", ...new Set(characters.map(c => c.element))];
+let selectedClass = "all";
+let selectedElement = "all";
+
+// === FILTER BUTTONS ===
+function makeFilterButtons(containerId, options, callback, path) {
+  const container = document.getElementById(containerId);
+  options.forEach(opt=>{
+    const btn = document.createElement("button");
+    if(opt==="all"){
+      btn.textContent = opt;
+    }else{
+      const img = document.createElement("img");
+      img.src = `/static/${path}/${opt}.png`;  // e.g. static/class_icons/mage.png
+      img.alt = opt;
+      img.classList.add("filter-icon");
+      btn.appendChild(img);
+    }
+    btn.classList.add("filter-btn");
+    if (opt==="all") btn.classList.add("active");
+    btn.addEventListener("click",()=>{
+      [...container.children].forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      callback(opt);
+    });
+    container.appendChild(btn);
+  });
+}
+
+function initLabels() {
+  document.querySelectorAll(".tier-label").forEach(label => {
+    // Prevent drag/drop into editable label
+    label.addEventListener("dragover", e => e.preventDefault());
+    label.addEventListener("drop", e => e.preventDefault());
+
+    // Save automatically on edit
+    label.addEventListener("input", () => {
+      // Optional: prevent empty names
+      if (label.innerText.trim() === "") {
+        label.innerText = "Unnamed Tier";
+      }
+    });
+
+    // Normalize name when leaving field
+    label.addEventListener("blur", () => {
+      label.innerText = label.innerText.trim() || "Unnamed Tier";
+    });
+  });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  initLabels();
+});
+
+// Filters for pool
+makeFilterButtons("class-filters",classes,opt=>{selectedClass=opt;updatePool();}, "class_icons");
+makeFilterButtons("element-filters",elements,opt=>{selectedElement=opt;updatePool();}, "element_icons");
+
+// Filters for tier highlighting
+makeFilterButtons("tier-class-filters",classes,opt=>{selectedClass=opt;updateHighlight();}, "class_icons");
+makeFilterButtons("tier-element-filters",elements,opt=>{selectedElement=opt;updateHighlight();}, "element_icons");
+
+// === IMAGE POOL ===
+const pool = document.getElementById("image-pool");
+
+function updatePool(){
+  pool.innerHTML="";
+  characters.forEach(ch=>{
+    if((selectedClass==="all"||ch.class===selectedClass) &&
+       (selectedElement==="all"||ch.element===selectedElement)) {
+      if(!document.querySelector(`.tier-dropzone img[data-code="${ch.code}"]`)) {
+        const img=document.createElement("img");
+        img.src=ch.src;
+        img.dataset.class=ch.class;
+        img.dataset.element=ch.element;
+        img.dataset.code=ch.code;
+        makeDraggable(img);
+        pool.appendChild(img);
+      }
+    }
+  });
+}
+updatePool();
+
+function updateHighlight(){
+  document.querySelectorAll(".tier-dropzone img").forEach(img=>{
+    const clsMatch = (selectedClass==="all"||img.dataset.class===selectedClass);
+    const elmMatch = (selectedElement==="all"||img.dataset.element===selectedElement);
+    const custHighlightMatch = custom_highlights.includes(img.dataset.code)
+    img.style.opacity=(clsMatch&&elmMatch&&custHighlightMatch)?"1":"0.3";
+  });
+}
+
+// === DRAG/DROP ===
+let dragSource=null;
+function makeDraggable(img){
+  img.draggable=true;
+  img.addEventListener("dragstart",e=>{
+    dragSource=img;
+    e.dataTransfer.setData("code",img.dataset.code);
+  });
+}
+
+function initDropzones(){
+  document.querySelectorAll(".tier-dropzone").forEach(zone=>{
+    zone.addEventListener("dragover", e => e.preventDefault());
+    zone.addEventListener("drop", e => {
+      e.preventDefault();
+      if (dragSource) {
+        if (dragSource.parentElement.id === "image-pool") {
+          // move from pool -> row
+          zone.appendChild(dragSource);
+        } else {
+          // move between rows
+          zone.appendChild(dragSource);
+        }
+        updatePool();
+        updateHighlight();
+      }
+    });
+  });
+}
+
+initDropzones();
+
+// Pool dropzone
+pool.addEventListener("dragover",e=>e.preventDefault());
+pool.addEventListener("drop",e=>{
+  e.preventDefault();
+  if(dragSource && dragSource.closest(".tier-dropzone")){
+    pool.appendChild(dragSource);
+    updatePool();
+    updateHighlight();
+  }
+});
+
+// === ROW MANAGEMENT ===
+document.getElementById("add-row").addEventListener("click", () => {
+  const row = document.createElement("div");
+  row.className = "tier-row";
+  row.innerHTML = `
+    <span class="tier-label" contenteditable="true">New Tier</span>
+    <div class="tier-dropzone"></div>
+    <button class="delete-row">X</button>`;
+  document.getElementById("tier-rows").appendChild(row);
+  row.querySelector(".delete-row").addEventListener("click", () => row.remove());
+  initDropzones();
+  initLabels();   // 🔥 ensure new label is wired
+});
+
+document.querySelectorAll(".delete-row").forEach(btn=>
+  btn.addEventListener("click",()=>{
+    btn.parentElement.remove();
+    updatePool();
+  }
+));
+
+// === EXPORT / IMPORT ===
+document.getElementById("export-btn").addEventListener("click",()=>{
+  const data=[];
+  document.querySelectorAll(".tier-row").forEach(row=>{
+    const name=row.querySelector(".tier-label").innerText.trim();
+    const chars=[...row.querySelectorAll("img")].map(img=>img.dataset.code);
+    data.push({row:name,chars:chars});
+  });
+  document.getElementById("export-code").value=JSON.stringify(data);
+});
+
+document.getElementById("import-btn").addEventListener("click", () => {
+  try {
+    const code = document.getElementById("import-code").value.trim();
+    const rows = JSON.parse(code);
+    const container = document.getElementById("tier-rows");
+    container.innerHTML = "";
+    rows.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "tier-row";
+      row.innerHTML = `
+        <span class="tier-label" contenteditable="true">${r.row}</span>
+        <div class="tier-dropzone"></div>
+        <button class="delete-row">X</button>`;
+      const dropzone = row.querySelector(".tier-dropzone");
+      r.chars.forEach(c => {
+        const ch = characters.find(ch => ch.code === c);
+        if (ch) {
+          const img = document.createElement("img");
+          img.src = ch.src;
+          img.dataset.class = ch.class;
+          img.dataset.element = ch.element;
+          img.dataset.code = ch.code;
+          makeDraggable(img);
+          dropzone.appendChild(img);
+        }
+      });
+      container.appendChild(row);
+      row.querySelector(".delete-row").addEventListener("click", () => row.remove());
+    });
+    initDropzones();
+    initLabels();   // 🔥 wire up imported labels
+    updatePool();
+  } catch (err) {
+    alert("Invalid import code");
+  }
+});
+
+
+document.getElementById("export-highlights-btn").addEventListener("click",()=>{
+  const data=[];
+  document.querySelectorAll(".tier-row").forEach(row=>{
+    const name=row.querySelector(".tier-label").innerText.trim();
+    const chars=[...row.querySelectorAll("img")].map(img=>img.dataset.code);
+    chars.forEach(c=>data.push(c));
+  });
+  document.getElementById("current-highlights").value=JSON.stringify(data);
+});
+
+document.getElementById("import-highlights-btn").addEventListener("click", () => {
+  try {
+    const code = document.getElementById("import-highlights").value.trim();
+    custom_highlights = JSON.parse(code);
+
+  } catch (err) {
+    alert("Invalid import code");
+  }
+  updateHighlight();
+});
+
+</script>
+
+
+{% endblock %}

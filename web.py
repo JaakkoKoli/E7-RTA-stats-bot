@@ -343,5 +343,14 @@ def legenddata():
                            preban_data=create_picks_list(prebans, prebans_wins, winrate_prebans, 5)
                            )
 
+@app.route("/tierlist")
+def tierlist():
+    classes = {"manauser": "soulweaver", "mage": "mage", "knight": "knight", "warrior": "warrior", "ranger": "ranger", "assassin": "thief"}
+    elements = {"wind": "earth", "ice": "ice", "fire": "fire", "light": "light", "dark": "dark"}
+    characters = [
+        {"src": f"static/hero_images/{hero.code}.png", "name": hero.name, "code": hero.code, "element": elements.get(hero.element, ""), "class": classes.get(hero.role, "")} for hero in hero_list.hero_list
+    ]
+    return render_template("tierlist.html", characters=characters)
+
 if __name__ == "__main__":
     app.run(debug=True)
