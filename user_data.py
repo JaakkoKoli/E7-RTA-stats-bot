@@ -26,13 +26,13 @@ class User:
     
     def __eq__(self, user2) -> bool:
         if isinstance(user2, User):
-            return self.get_name_with_server() == user2.get_name_with_server()
-        return self.get_name_with_server() == user2
+            return self.name == user2.name
+        return self.name == user2
     
     def __lt__(self, user2) -> bool:
         if isinstance(user2, User):
-            return self.get_name_with_server() < user2.get_name_with_server()
-        return self.get_name_with_server() < user2
+            return self.name < user2.name
+        return self.name < user2
     
     def get_match_data(self, hero_list) -> requests.Response:
         response = requests.post(f"https://epic7.gg.onstove.com/gameApi/getBattleList?nick_no={self.id}&world_code=world_{self.server}&lang=en&season_code=", json={})
@@ -53,33 +53,60 @@ class UserData:
             self.users.append(User(int(user["nick_no"]), user["nick_nm"].lower(), int(user["rank"]), user["code"], server))
         self.users.sort()
     
-    def create_search_index(self) -> None:
-        start_chars = list({user.name[0] for user in self.users})
+    def recursive_create_index(self, n:int, start_i:int=0, depth:int=0, max_size:int=20) -> dict:
+        start_chars = list({user.name.lower()[depth] for user in self.users[start_i:(start_i+n)] if len(user.name)>depth})
         start_chars.sort()
         index = dict()
         current_start_char = 0
-        start_i = 0
-        for i, user in enumerate(self.users):
-            if user.name[0] != start_chars[current_start_char]:
-                index[start_chars[current_start_char]] = [start_i, i]
-                start_i = i
-                current_start_char += 1
-        index[start_chars[current_start_char]] = [start_i, len(self.users)-1]
-        self.index = index
-        
-            
+        current_size = 0
+        index[" "] = [start_i, n]
+        for user in self.users[start_i:(start_i+n)]:
+            success = False
+            while not success:
+                if len(user.name)<=depth:
+                    start_i += current_size + 1
+                    current_size = 0
+                    success = True
+                elif user.name.lower()[depth] != start_chars[current_start_char]:
+                    if current_size > 0:
+                        if current_size <= max_size:
+                            index[start_chars[current_start_char]] = [start_i, current_size]
+                        else:
+                            index[start_chars[current_start_char]] = self.recursive_create_index(current_size, start_i, depth+1, max_size)
+                    start_i += current_size
+                    current_start_char += 1
+                    current_size = 0
+                else:
+                    success = True
+                    current_size += 1
+        if current_size <= max_size:
+            index[start_chars[current_start_char]] = [start_i, current_size]
+        else:
+            index[start_chars[current_start_char]] = self.recursive_create_index(current_size, start_i, depth+1, max_size)
+        return index
+    
+    def create_search_index(self) -> None:
+        self.index = self.recursive_create_index(n=len(self.users))        
+    
     def find_user(self, search_query:str) -> list[User]:
         if len(search_query) == 0:
             return []
         search_query = search_query.lower()
         if search_query[0] not in self.index.keys():
             return [] 
-        search_area = self.index[search_query[0]]
-        matches = []
-        for user in self.users[search_area[0]:search_area[1]]:
-            if search_query in user.name:
-                matches.append(user)
-        return matches
+        ind = self.index[search_query[0]]
+        if len(search_query) > 1 and type(ind) != list:
+            i = 1
+            while len(search_query)>i:
+                ind = ind.get(search_query[i], [])
+                if type(ind) == list: 
+                    break
+                i += 1
+        if type(ind) == list:
+            if len(ind) == 0:
+                return []
+            return self.users[ind[0]:(ind[0]+ind[1])]
+        return self.users[ind[" "][0]:(ind[" "][0]+ind[" "][1])]
     
     def get_user(self, user_name:str, server:str) -> User:
         user_name = user_name.lower()

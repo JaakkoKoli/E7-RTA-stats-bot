@@ -92,15 +92,17 @@ def n_lowest_winrates(counter:Counter, n:int):
 
 def name_autocomplete(current:str):
     data = []
+    current = current.lower()
     users = user_data.find_user(current)
-    usernames = [user.name for user in users]
-    if current in usernames:
-        user_string = users[usernames.index(current)].get_name_with_server()
-        data.append(user_string)
+    usernames = [user.name.lower() for user in users]
+    if usernames.count(current)>0:
+        for user in users:
+            if user.name.lower() == current:
+                data.append(user.get_name_with_server())
     if len(users) != 0:
         best_indices = np.flip(np.argsort([user.points + user.level + (2000 - len(user.name)) for user in users]))
         i = 0
-        while len(data) < 3 and i < len(best_indices):
+        while len(data) < 5 and i < len(best_indices):
             user = users[best_indices[i]]
             if user.name != current:
                 user_string = user.get_name_with_server()

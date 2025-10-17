@@ -11,3 +11,4 @@ tests/__pycache__/
 htmlcov/
 static/hero_images
 static/rank_icons
+test.py

@@ -75,7 +75,7 @@
 // === TEST DATA ===
 const characters = {{ characters|tojson }};
 
-var custom_highlights = [characters.map(c=>c.code)]
+var custom_highlights = [];
 
 const classes = ["all", ...new Set(characters.map(c => c.class))];
 const elements = ["all", ...new Set(characters.map(c => c.element))];
@@ -167,7 +167,7 @@ function updateHighlight(){
   document.querySelectorAll(".tier-dropzone img").forEach(img=>{
     const clsMatch = (selectedClass==="all"||img.dataset.class===selectedClass);
     const elmMatch = (selectedElement==="all"||img.dataset.element===selectedElement);
-    const custHighlightMatch = custom_highlights.includes(img.dataset.code)
+    const custHighlightMatch = !custom_highlights.includes(img.dataset.code)
     img.style.opacity=(clsMatch&&elmMatch&&custHighlightMatch)?"1":"0.3";
   });
 }
@@ -287,11 +287,8 @@ document.getElementById("import-btn").addEventListener("click", () => {
 
 document.getElementById("export-highlights-btn").addEventListener("click",()=>{
   const data=[];
-  document.querySelectorAll(".tier-row").forEach(row=>{
-    const name=row.querySelector(".tier-label").innerText.trim();
-    const chars=[...row.querySelectorAll("img")].map(img=>img.dataset.code);
-    chars.forEach(c=>data.push(c));
-  });
+  const chars=[...pool.querySelectorAll("img")].map(img=>img.dataset.code);
+  chars.forEach(c=>data.push(c));
   document.getElementById("current-highlights").value=JSON.stringify(data);
 });
 
