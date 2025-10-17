@@ -34,7 +34,7 @@ class User:
             return self.name < user2.name
         return self.name < user2
     
-    def get_match_data(self, hero_list) -> requests.Response:
+    def get_match_data(self, hero_list) -> MatchHistory:
         response = requests.post(f"https://epic7.gg.onstove.com/gameApi/getBattleList?nick_no={self.id}&world_code=world_{self.server}&lang=en&season_code=", json={})
         matches = MatchHistory([])
         if response.status_code == 200:
@@ -47,11 +47,20 @@ class UserData:
     def __init__(self):
         self.users:list[User] = []
         self.index:dict = dict()
+        self.user_lookup = dict()
+        self.user_lookup_ind = dict()
     
     def read_data(self, data:object, server:str) -> None:
         for user in data["users"]:
             self.users.append(User(int(user["nick_no"]), user["nick_nm"].lower(), int(user["rank"]), user["code"], server))
         self.users.sort()
+        self.create_lookup_table()
+    
+    def create_lookup_table(self) -> None:
+        for i, user in enumerate(self.users):
+            self.user_lookup[user.get_name_with_server()] = i
+            self.user_lookup_ind[f"{user.id}#{user.server}"] = i
+        
     
     def recursive_create_index(self, n:int, start_i:int=0, depth:int=0, max_size:int=20) -> dict:
         start_chars = list({user.name.lower()[depth] for user in self.users[start_i:(start_i+n)] if len(user.name)>depth})
@@ -109,16 +118,12 @@ class UserData:
         return self.users[ind[" "][0]:(ind[" "][0]+ind[" "][1])]
     
     def get_user(self, user_name:str, server:str) -> User:
-        user_name = user_name.lower()
-        if user_name[0] not in self.index.keys():
-            return None
-        for user in self.users[self.index[user_name[0]][0]:self.index[user_name[0]][1]]:
-            if user.name == user_name and user.server == server:
-                return user
-        return None
+        ind = self.user_lookup.get(user_name.lower()+"#"+server, 0)
+        return self.users[ind]
     
     def get_user_by_id(self, user_id:str, server:str) -> User:
-        return self.users[self.get_user_ids_and_server_as_list().index(f"{user_id}#{server}")]
+        ind = self.user_lookup_ind.get(f"{user_id}#{server}", 0)
+        return self.users[ind]
     
     def get_user_ids_as_list(self) -> list[int]:
         return [user.id for user in self.users]

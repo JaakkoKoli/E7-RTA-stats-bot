@@ -9,6 +9,7 @@ class ResourceHandler:
     def __init__(self, image_location:str="hero_images/", data_location:str="data/"):
         self.image_location:str = image_location
         self.data_location:str = data_location
+        self.download_hero_list()
         self.hero_list = self.read_hero_list()
         self.image_codes = self.get_current_hero_image_codes()
         self.download_all_missing_hero_images()

@@ -127,135 +127,111 @@ def index():
 @app.route("/user/<server>/<username>")
 def user_summary(username, server):
     user = user_data.get_user(username, server)
+    matches = user.get_match_data(hero_list)
+    match_result_vector = matches.get_match_result_vector()
+    matches_n = len(match_result_vector)
+    wins_n = sum(match_result_vector)
     
-    response = get_match_data_by_user_id(user.id, server)
-    match_result_vector = []
-    matches = MatchHistory([])
-    if response.status_code == 200:
-        match_list = response.json()["result_body"]["battle_list"]
-        matches = MatchHistory([Match(match, hero_list) for match in match_list])
-        match_result_vector = matches.get_match_result_vector()
-        matches_n = len(match_result_vector)
-        wins_n = sum(match_result_vector)
+    enemy_picks = matches.get_all_enemy_pick_counts()
+    enemy_wins = matches.get_all_enemy_pick_win_against_counts()
+    matchups = matches.get_all_matchup_counts()
+    matchups_wins = matches.get_all_matchup_win_counts()
+
+    
+    matchup_winrate = {}
+    for hero_code in matchups.keys():
+        if hero_code != "total":
+            matchup_winrate[hero_code] = (matchups_wins.get(hero_code, Counter([]))["total"] + sum(match_result_vector)) / (matchups.get(hero_code, Counter([]))["total"] + len(match_result_vector))
+    matchup_winrate = Counter(matchup_winrate)
+    
+    enemy_pick_winrate = {}
+    for hero_code in enemy_picks.keys():
+        if hero_code != "total":
+            enemy_pick_winrate[hero_code] = (enemy_wins.get(hero_code, 0) + sum(match_result_vector)) / (enemy_picks.get(hero_code, 0) + len(match_result_vector))
+    enemy_pick_winrate = Counter(enemy_pick_winrate)
+    
+    match_summary = {
+        "username": username,
+        "server": server,
+        "point": user.points,
+        "total_matches": matches_n,
+        "wins": wins_n,
+        "losses": matches_n - wins_n,
+        "win_rate": f"{round(wins_n/matches_n*100,1)}%",
+        "icon": f"hero_images/{user.profile_hero_code}.png"
+    }
+    
+    rank_history = [{
+        "date": "",
+        "rank": match.points_after_match
+    } for match in matches.matches]
+    
+    def create_picks_list(picks_list):
+        picks_dicts = []
         
-        enemy_picks = matches.get_all_enemy_pick_counts()
-        enemy_wins = matches.get_all_enemy_pick_win_against_counts()
+        picks = matches.get_all_own_pick_counts()
+        wins = matches.get_all_own_pick_win_counts()
         matchups = matches.get_all_matchup_counts()
         matchups_wins = matches.get_all_matchup_win_counts()
+        for code in picks_list:
+            
+            matchups = matches.get_matchup_counts(code)
+            matchups_wins = matches.get_matchup_win_counts(code)
+            allies = matches.get_ally_counts(code)
+            allies_wins = matches.get_ally_win_counts(code)
+            allies_winrate = {}
+            for hero_code in allies.keys():
+                if hero_code != "total":
+                    allies_winrate[hero_code] = (allies_wins[hero_code] + sum(match_result_vector)) / (allies[hero_code] + len(match_result_vector))
+            allies_winrate = Counter(allies_winrate)
+            matchup_winrate = {}
+            for hero_code in matchups.keys():
+                if hero_code != "total":
+                    matchup_winrate[hero_code] = (matchups_wins[hero_code] + sum(match_result_vector)) / (matchups[hero_code] + len(match_result_vector))
+            matchup_winrate = Counter(matchup_winrate)
+            
+            best_allies = allies_winrate.most_common(3)
+            worst_allies = n_lowest_winrates(allies_winrate, 3)
+            best_enemies = matchup_winrate.most_common(3)
+            worst_enemies = n_lowest_winrates(matchup_winrate, 3)
+            picks_dicts.append({
+                "name": hero_list.get_hero_by_code(code).name,
+                "icon": f"{code}.png",
+                "wins": wins[code],
+                "losses": picks[code] - wins[code],
+                "best_allies": [
+                    {"name": hero_list.get_hero_by_code(ally[0]).name, "icon": f"{ally[0]}.png", "wins": allies_wins[ally[0]], "losses": allies[ally[0]] - allies_wins[ally[0]]}
+                for ally in best_allies],
+                "worst_allies": [
+                    {"name": hero_list.get_hero_by_code(ally[0]).name, "icon": f"{ally[0]}.png", "wins": allies_wins[ally[0]], "losses": allies[ally[0]] - allies_wins[ally[0]]}
+                for ally in worst_allies],
+                "best_enemies": [
+                    {"name": hero_list.get_hero_by_code(enemy[0]).name, "icon": f"{enemy[0]}.png", "wins": matchups_wins[enemy[0]], "losses": matchups[enemy[0]] - matchups_wins[enemy[0]]}
+                for enemy in best_enemies],
+                "worst_enemies": [
+                    {"name": hero_list.get_hero_by_code(enemy[0]).name, "icon": f"{enemy[0]}.png", "wins": matchups_wins[enemy[0]], "losses": matchups[enemy[0]] - matchups_wins[enemy[0]]}
+                for enemy in worst_enemies]
+            })
+        return picks_dicts
     
+    def create_enemies_list(enemies_list):
+        picks_dicts = []
+        enemy_picks = matches.get_all_enemy_pick_counts()
+        enemy_wins_against = matches.get_all_enemy_pick_win_against_counts()
         
-        matchup_winrate = {}
-        for hero_code in matchups.keys():
-            if hero_code != "total":
-                matchup_winrate[hero_code] = (matchups_wins.get(hero_code, Counter([]))["total"] + sum(match_result_vector)) / (matchups.get(hero_code, Counter([]))["total"] + len(match_result_vector))
-        matchup_winrate = Counter(matchup_winrate)
-        
-        enemy_pick_winrate = {}
-        for hero_code in enemy_picks.keys():
-            if hero_code != "total":
-                enemy_pick_winrate[hero_code] = (enemy_wins.get(hero_code, 0) + sum(match_result_vector)) / (enemy_picks.get(hero_code, 0) + len(match_result_vector))
-        enemy_pick_winrate = Counter(enemy_pick_winrate)
-        
-        match_summary = {
-            "username": username,
-            "server": server,
-            "point": user.points,
-            "total_matches": matches_n,
-            "wins": wins_n,
-            "losses": matches_n - wins_n,
-            "win_rate": f"{round(wins_n/matches_n*100,1)}%",
-            "icon": f"hero_images/{user.profile_hero_code}.png"
-        }
-        
-        rank_history = [{
-            "date": "",
-            "rank": match.points_after_match
-        } for match in matches.matches]
-        
-        def create_picks_list(picks_list):
-            picks_dicts = []
-            
-            picks = matches.get_all_own_pick_counts()
-            wins = matches.get_all_own_pick_win_counts()
-            matchups = matches.get_all_matchup_counts()
-            matchups_wins = matches.get_all_matchup_win_counts()
-            
-            for code in picks_list:
-                
-                matchups = matches.get_matchup_counts(code)
-                matchups_wins = matches.get_matchup_win_counts(code)
-                allies = matches.get_ally_counts(code)
-                allies_wins = matches.get_ally_win_counts(code)
-                allies_winrate = {}
-                for hero_code in allies.keys():
-                    if hero_code != "total":
-                        allies_winrate[hero_code] = (allies_wins[hero_code] + sum(match_result_vector)) / (allies[hero_code] + len(match_result_vector))
-                allies_winrate = Counter(allies_winrate)
-                matchup_winrate = {}
-                for hero_code in matchups.keys():
-                    if hero_code != "total":
-                        matchup_winrate[hero_code] = (matchups_wins[hero_code] + sum(match_result_vector)) / (matchups[hero_code] + len(match_result_vector))
-                matchup_winrate = Counter(matchup_winrate)
-                
-                best_allies = allies_winrate.most_common(3)
-                worst_allies = n_lowest_winrates(allies_winrate, 3)
-                best_enemies = matchup_winrate.most_common(3)
-                worst_enemies = n_lowest_winrates(matchup_winrate, 3)
-                picks_dicts.append({
-                    "name": hero_list.get_hero_by_code(code).name,
-                    "icon": f"{code}.png",
-                    "wins": wins[code],
-                    "losses": picks[code] - wins[code],
-                    "best_allies": [
-                        {"name": hero_list.get_hero_by_code(ally[0]).name, "icon": f"{ally[0]}.png", "wins": allies_wins[ally[0]], "losses": allies[ally[0]] - allies_wins[ally[0]]}
-                    for ally in best_allies],
-                    "worst_allies": [
-                        {"name": hero_list.get_hero_by_code(ally[0]).name, "icon": f"{ally[0]}.png", "wins": allies_wins[ally[0]], "losses": allies[ally[0]] - allies_wins[ally[0]]}
-                    for ally in worst_allies],
-                    "best_enemies": [
-                        {"name": hero_list.get_hero_by_code(enemy[0]).name, "icon": f"{enemy[0]}.png", "wins": matchups_wins[enemy[0]], "losses": matchups[enemy[0]] - matchups_wins[enemy[0]]}
-                    for enemy in best_enemies],
-                    "worst_enemies": [
-                        {"name": hero_list.get_hero_by_code(enemy[0]).name, "icon": f"{enemy[0]}.png", "wins": matchups_wins[enemy[0]], "losses": matchups[enemy[0]] - matchups_wins[enemy[0]]}
-                    for enemy in worst_enemies]
-                })
-            return picks_dicts
-        
-        def create_enemies_list(enemies_list):
-            picks_dicts = []
-            enemy_picks = matches.get_all_enemy_pick_counts()
-            enemy_wins_against = matches.get_all_enemy_pick_win_against_counts()
-            
-            for code in enemies_list:
-                picks_dicts.append({
-                    "name": hero_list.get_hero_by_code(code).name,
-                    "icon": f"{code}.png",
-                    "wins": enemy_wins_against[code],
-                    "losses": enemy_picks[code] - enemy_wins_against[code]
-                })
-            return picks_dicts
-        
-        best_picks_list = create_picks_list([x[0] for x in matchup_winrate.most_common(10)])
-        worst_picks_list = create_picks_list([x[0] for x in n_lowest_winrates(matchup_winrate, 10)])
-        best_enemies_list = create_enemies_list([x[0] for x in enemy_pick_winrate.most_common(10)])
-        worst_enemies_list = create_enemies_list([x[0] for x in n_lowest_winrates(enemy_pick_winrate, 10)])
-        
-    else:
-        match_summary = {
-            "username": username,
-            "server": server,
-            "point": user.points,
-            "total_matches": 100,
-            "wins": 50,
-            "losses": 50,
-            "win_rate": "50%",
-            "icon": f"hero_images/{user.profile_hero_code}.png"
-        }
-        rank_history = {}
-        best_picks_list = {}
-        worst_picks_list = {}
-        best_enemies_list = {}
-        worst_enemies_list = {}
+        for code in enemies_list:
+            picks_dicts.append({
+                "name": hero_list.get_hero_by_code(code).name,
+                "icon": f"{code}.png",
+                "wins": enemy_wins_against[code],
+                "losses": enemy_picks[code] - enemy_wins_against[code]
+            })
+        return picks_dicts
+    
+    best_picks_list = create_picks_list([x[0] for x in matchup_winrate.most_common(10)])
+    worst_picks_list = create_picks_list([x[0] for x in n_lowest_winrates(matchup_winrate, 10)])
+    best_enemies_list = create_enemies_list([x[0] for x in enemy_pick_winrate.most_common(10)])
+    worst_enemies_list = create_enemies_list([x[0] for x in n_lowest_winrates(enemy_pick_winrate, 10)])
     return render_template("summary.html", 
                            summary=match_summary, 
                            rank_history=rank_history, 
