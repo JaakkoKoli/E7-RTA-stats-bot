@@ -130,7 +130,8 @@ legend_data = {"match_result_vector": match_results,
                "individual_prebans": legend_player_prebans,
                "combinations": combinations_,
                "combinations_wins": combinations_wins_,
-               "combinations_keys": combinations_dict_}
+               "combinations_keys": combinations_dict_,
+               "sequences": matches.get_all_pick_sequence_vectors()}
 
 with open("data/legend_data.json", "w") as json_file:
     json.dump(legend_data, json_file, indent=4)

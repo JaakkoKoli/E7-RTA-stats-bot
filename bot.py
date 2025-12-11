@@ -508,6 +508,107 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
             print(e)
             await ctx.followup.send('Not enough games played.')
 
+async def cumulative_autocomplete(ctx:discord.Interaction, current:str):
+    return [app_commands.Choice(name="yes", value="yes"), app_commands.Choice(name="no", value="no")]
+
+async def type_autocomplete(ctx:discord.Interaction, current:str):
+    return [app_commands.Choice(name="probability", value="probability"), app_commands.Choice(name="average attempts", value="average attempts")]
+
+async def gear_quality_autocomplete(ctx:discord.Interaction, current:str):
+    return [app_commands.Choice(name="red", value="red"), app_commands.Choice(name="purple", value="purple")]
+
+async def starting_level_autocomplete(ctx:discord.Interaction, current:str):
+    return [app_commands.Choice(name=x*3, value=x*3) for x in range(5)]
+
+def red_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array[np.longdouble]):
+    if level == 4:
+        probabilities[speed + min(4, speed_rolls)] += np.exp(logp + np.log(0.75))
+        probabilities[speed + 2 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.33223 * 0.25)))
+        probabilities[speed + 3 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.33223 * 0.25)))
+        probabilities[speed + 4 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.33223 * 0.25)))
+        probabilities[speed + 5 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.00331 * 0.25)))
+    else:
+        red_odds(level+1, speed, logp + np.log(0.75), speed_rolls, probabilities)
+        red_odds(level+1, speed+2, logp + np.log(0.33223 * 0.25), speed_rolls+1, probabilities)
+        red_odds(level+1, speed+3, logp + np.log(0.33223 * 0.25), speed_rolls+1, probabilities)
+        red_odds(level+1, speed+4, logp + np.log(0.33223 * 0.25), speed_rolls+1, probabilities)
+        red_odds(level+1, speed+5, logp + np.log(0.00331 * 0.25), speed_rolls+1, probabilities)
+        
+def purple_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array[np.longdouble]):
+    if level == 3:
+        probabilities[speed + min(4, speed_rolls)] += np.exp(logp + np.log(0.75))
+        probabilities[speed + 1 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.03833 * 0.25)))
+        probabilities[speed + 2 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.34843 * 0.25)))
+        probabilities[speed + 3 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.34843 * 0.25)))
+        probabilities[speed + 4 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.26481 * 0.25)))
+    else:
+        purple_odds(level+1, speed, logp + np.log(0.75), speed_rolls, probabilities)
+        purple_odds(level+1, speed+1, logp + np.log(0.03833 * 0.25), speed_rolls+1, probabilities)
+        purple_odds(level+1, speed+2, logp + np.log(0.34843 * 0.25), speed_rolls+1, probabilities)
+        purple_odds(level+1, speed+3, logp + np.log(0.34843 * 0.25), speed_rolls+1, probabilities)
+        purple_odds(level+1, speed+4, logp + np.log(0.26481 * 0.25), speed_rolls+1, probabilities)
+
+def cumulative_odds(probabilities:np.array[np.longdouble]):
+    probabilities_cumulative = np.zeros(len(probabilities), dtype=np.longdouble)
+    cumulative  = np.longdouble(0.0)
+    start_i = 0
+    end_i = -1
+    for i in range(len(probabilities)-1, 0, -1):
+        if cumulative == 1.0:
+            start_i = i
+        if cumulative == 0.0:
+            end_i = i
+        cumulative = min(1.0, cumulative + probabilities[i])
+        probabilities_cumulative[i] = cumulative
+    return probabilities_cumulative, start_i, end_i
+
+@tree.command(name="speedcheck", description="Check probability distribution for speed.")
+@app_commands.autocomplete(gear_quality=gear_quality_autocomplete)
+@app_commands.autocomplete(starting_level=starting_level_autocomplete)
+@app_commands.autocomplete(cumulative=cumulative_autocomplete)
+@app_commands.autocomplete(type=type_autocomplete)
+async def speedcheck(ctx:discord.Interaction, gear_quality:str="red", starting_speed:int=4, starting_level:int=0, rolls_in_speed:int=0, cumulative:str="yes", type:str="probability"):
+    if gear_quality not in ["red","purple"] or starting_speed<=0 or starting_speed>25 or starting_speed/(rolls_in_speed+1.01)>=5:
+        await ctx.response.send_message("Invalid arguments")
+    else:
+        if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+            await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
+        else:
+            if gear_quality=="purple":
+                probabilities = np.zeros(25, dtype=np.longdouble)
+            else:
+                probabilities = np.zeros(35, dtype=np.longdouble)
+            if gear_quality=="red":
+                red_odds(int(starting_level/3), int(starting_speed), 0.0, rolls_in_speed, probabilities)
+            else:
+                purple_odds(int(starting_level/3), int(starting_speed), 0.0, rolls_in_speed, probabilities)
+            if cumulative == "yes":
+                probabilities, start_i, end_i = cumulative_odds(probabilities)
+            else:
+                _, start_i, end_i = cumulative_odds(probabilities)
+            if end_i == -1:
+                end_i == len(probabilities)-1
+            if type=="probability":
+                response = "Probabilities\n"
+                for i, p in enumerate(probabilities):
+                    if i>=start_i and i<=end_i:
+                        if p > 1e-2:
+                            response += f"**{i}**: {100*p:.1f}%\n"
+                        elif p > 1e-4:
+                            response += f"**{i}**: {100*p:.3f}%\n"
+                        elif p > 1e-6:
+                            response += f"**{i}**: {100*p:.5f}%\n"
+                        elif p > 1e-10:
+                            response += f"**{i}**: {100*p:.8f}%\n"
+                        else:
+                            response += f"**{i}**: {100*p:.15f}%\n"
+            else:
+                response = "Attempts to get on average\n"
+                for i, p in enumerate(probabilities):
+                    if p!=0.0 and i>=start_i and i<=end_i:
+                        response += f"**{i}**: {round(1.0/p,1)}\n"
+            await ctx.response.send_message(response)
+
 @bot.event
 async def on_ready():
     await tree.sync()

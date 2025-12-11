@@ -45,6 +45,12 @@ class HeroList:
             hero_code_dict[hero.code] = i
         return hero_code_dict
     
+    def create_reverse_hero_code_dict(self) -> dict:
+        hero_code_dict = {}
+        for i, hero in enumerate(self.hero_list):
+            hero_code_dict[i] = hero.code
+        return hero_code_dict
+    
     def create_hero_name_dict(self) -> dict:
         hero_name_dict = {}
         for i, hero in enumerate(self.hero_list):

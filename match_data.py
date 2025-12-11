@@ -42,6 +42,14 @@ class Match:
     def get_all_picks_codes(self) -> list[str]:
         return self.get_own_picks_codes() + self.get_enemy_picks_codes()
     
+    def get_all_codes_sequence(self) -> list[str]:
+        if len(self.picks_own)<5 or len(self.picks_enemy)<5:
+            return []
+        if sum([x.first_pick for x in self.picks_own]):
+            return [self.picks_own[0].hero_code, self.picks_enemy[0].hero_code, self.picks_enemy[1].hero_code, self.picks_own[1].hero_code, self.picks_own[2].hero_code, self.picks_enemy[2].hero_code, self.picks_enemy[3].hero_code, self.picks_own[3].hero_code, self.picks_own[4].hero_code, self.picks_enemy[4].hero_code]
+        else:
+            return [self.picks_enemy[0].hero_code, self.picks_own[0].hero_code, self.picks_own[1].hero_code, self.picks_enemy[1].hero_code, self.picks_enemy[2].hero_code, self.picks_own[2].hero_code, self.picks_own[3].hero_code, self.picks_enemy[3].hero_code, self.picks_enemy[4].hero_code, self.picks_own[4].hero_code]
+    
     def get_own_mvp(self) -> str:
         for pick in self.picks_own:
             if pick.mvp:
@@ -345,6 +353,9 @@ class MatchHistory:
         for i, match in enumerate(self.matches):
             first_picks[i] = int(match.get_own_first_pick() != "")
         return first_picks
+    
+    def get_all_pick_sequence_vectors(self) -> list [list[str]]:
+        return [x.get_all_codes_sequence() for x in self.matches if len(x.picks_enemy)==5 and len(x.picks_own)==5]
     
     def get_first_pick_wins_vector(self) -> list[int]:
         first_picks = [0]*len(self.matches)
