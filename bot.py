@@ -520,7 +520,7 @@ async def gear_quality_autocomplete(ctx:discord.Interaction, current:str):
 async def starting_level_autocomplete(ctx:discord.Interaction, current:str):
     return [app_commands.Choice(name=x*3, value=x*3) for x in range(5)]
 
-def red_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array[np.longdouble]):
+def red_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array):
     if level == 4:
         probabilities[speed + min(4, speed_rolls)] += np.exp(logp + np.log(0.75))
         probabilities[speed + 2 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.33223 * 0.25)))
@@ -534,7 +534,7 @@ def red_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np
         red_odds(level+1, speed+4, logp + np.log(0.33223 * 0.25), speed_rolls+1, probabilities)
         red_odds(level+1, speed+5, logp + np.log(0.00331 * 0.25), speed_rolls+1, probabilities)
         
-def purple_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array[np.longdouble]):
+def purple_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities:np.array):
     if level == 3:
         probabilities[speed + min(4, speed_rolls)] += np.exp(logp + np.log(0.75))
         probabilities[speed + 1 + min(4, speed_rolls+1)] += np.exp(np.longdouble(logp + np.log(0.03833 * 0.25)))
@@ -548,7 +548,7 @@ def purple_odds(level:int, speed:int, logp:float, speed_rolls:int, probabilities
         purple_odds(level+1, speed+3, logp + np.log(0.34843 * 0.25), speed_rolls+1, probabilities)
         purple_odds(level+1, speed+4, logp + np.log(0.26481 * 0.25), speed_rolls+1, probabilities)
 
-def cumulative_odds(probabilities:np.array[np.longdouble]):
+def cumulative_odds(probabilities:np.array):
     probabilities_cumulative = np.zeros(len(probabilities), dtype=np.longdouble)
     cumulative  = np.longdouble(0.0)
     start_i = 0
