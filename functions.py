@@ -6,7 +6,7 @@ import numpy as np
 
 def get_new_userdata(server:str) -> None:
     response = requests.get(
-        f"https://static.smilegatemegaport.com/gameRecord/epic7/epic7_user_world_{server}.json"
+        f"https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_user_world_{server}.json"
     )
     if response.status_code == 200:
         with open(f"data/epic7_user_world_{server}.json", "w") as file:
@@ -33,7 +33,7 @@ def save_image_from_url(url:str, file_path:str) -> None:
 
 def get_new_heroname_json() -> None:
     response = requests.get(
-        "http://static.smilegatemegaport.com/gameRecord/epic7/epic7_hero.json"
+        "https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json"
     )
     if response.status_code == 200:
         with open("data/heronames.json", "w") as file:
@@ -58,7 +58,7 @@ def download_all_data() -> None:
     herocodes = get_herocodes()
 
     for i, herocode in enumerate(herocodes):
-        image_url = "https://static.smilegatemegaport.com/event/live/epic7/guide/images/hero/{}_s.png".format(
+        image_url = "https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/{}_s.png".format(
             herocode
         )
         save_image_from_url(image_url, "hero_images/{}.png".format(herocode))
@@ -70,7 +70,7 @@ def get_top_100_players():
     try:
         for i in range(10):
             response = requests.post(
-            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss16&world_code=all&current_page={i+1}&lang=en"
+            f"https://e7api.onstove.com/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss16&world_code=all&current_page={i+1}&lang=en"
             )
             if response.status_code == 200:
                 res += [response.json()]
@@ -111,19 +111,19 @@ def get_hero_img(hero_code:str) -> Image:
         return Image.fromarray(image_array)
 
 def get_season_info() -> requests.Response:
-    url = "https://epic7.onstove.com/gg/gameApi/getUserInfo?world_code=world_global&nick_no=72987293&lang=en"
+    url = "https://e7api.onstove.com/gameApi/getUserInfo?world_code=world_global&nick_no=72987293&lang=en"
     payload = {}
     response = requests.post(url, json=payload)
-    seasons = response.json()["result_body"]["season_list"]
+    seasons = response.json()["value"]["result_body"]["season_list"]
     for season in seasons:
         if season["is_now_season"] == 1:
             return season
     return seasons[0]
-    
+
 def get_match_data_by_username(username:str, server:str) -> requests.Response:
     server = get_server_name(server)
     user_dict = create_dict_with_nickName_key_by_server(server)
-    url = "https://epic7.gg.onstove.com/gameApi/getBattleList?nick_no={}&world_code=world_{}&lang=en&season_code=".format(
+    url = "https://e7api.onstove.com/gameApi/getBattleList?nick_no={}&world_code=world_{}&lang=en&season_code=".format(
         get_id_by_username(username, user_dict), server
     )
     payload = {}
@@ -133,7 +133,7 @@ def get_match_data_by_username(username:str, server:str) -> requests.Response:
 
 def get_match_data_by_user_id(user_id:str, server:str) -> requests.Response:
     server = get_server_name(server)
-    url = "https://epic7.gg.onstove.com/gameApi/getBattleList?nick_no={}&world_code=world_{}&lang=en&season_code=".format(user_id, server)
+    url = "https://e7api.onstove.com/gameApi/getBattleList?nick_no={}&world_code=world_{}&lang=en&season_code=".format(user_id, server)
     payload = {}
     response = requests.post(url, json=payload)
 
@@ -219,7 +219,7 @@ def create_winrate_graph(win_vector:list[int]) -> np.ndarray:
         else:
             return np.zeros(100)
     res = np.zeros(n)
-    
+
     div = 1
     for i in range(n):
         wr = 0

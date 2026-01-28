@@ -20,17 +20,17 @@ import numpy as np
 # Check if required folder structure exists, create if not
 
 if not os.path.exists("data"):
-    os.makedirs("data") 
+    os.makedirs("data")
 if not os.path.exists("static"):
     os.makedirs("static")
 if not os.path.exists("static/hero_images"):
-    os.makedirs("static/hero_images")   
+    os.makedirs("static/hero_images")
 if not os.path.exists("static/rank_icons"):
-    os.makedirs("static/rank_icons")   
+    os.makedirs("static/rank_icons")
 if not os.path.isfile("data/points.json"):
     with open("data/points.json", "w") as json_file:
         json.dump({}, json_file, indent=4)
-  
+
 
 # Update hero data, check if new image(s) need to be downloaded
 hero_popularity = HeroPopularity()
@@ -45,7 +45,7 @@ hero_dict = hero_list.get_hero_vector_dict()
 current_rank_images = [f.split(".")[0] for f in os.listdir("static/rank_icons") if os.path.isfile(os.path.join("static/rank_icons", f))]
 for rank in ["bronze", "silver", "gold", "master", "challenger", "champion", "warlord", "emperor", "legend"]:
     if rank not in current_rank_images:
-        save_image_from_url(f"https://static.smilegatemegaport.com/event/live/epic7/gg/images/common/grade/grade_{rank}.png", f"static/rank_icons/{rank}.png")
+        save_image_from_url(f"https://static-pubcomm.onstove.com/event/live/epic7/gg/images/common/grade/grade_{rank}.png", f"static/rank_icons/{rank}.png")
 
 # Load and update user data, and create a search index
 user_data = UserData()
@@ -131,25 +131,25 @@ def user_summary(username, server):
     match_result_vector = matches.get_match_result_vector()
     matches_n = len(match_result_vector)
     wins_n = sum(match_result_vector)
-    
+
     enemy_picks = matches.get_all_enemy_pick_counts()
     enemy_wins = matches.get_all_enemy_pick_win_against_counts()
     matchups = matches.get_all_matchup_counts()
     matchups_wins = matches.get_all_matchup_win_counts()
 
-    
+
     matchup_winrate = {}
     for hero_code in matchups.keys():
         if hero_code != "total":
             matchup_winrate[hero_code] = (matchups_wins.get(hero_code, Counter([]))["total"] + sum(match_result_vector)) / (matchups.get(hero_code, Counter([]))["total"] + len(match_result_vector))
     matchup_winrate = Counter(matchup_winrate)
-    
+
     enemy_pick_winrate = {}
     for hero_code in enemy_picks.keys():
         if hero_code != "total":
             enemy_pick_winrate[hero_code] = (enemy_wins.get(hero_code, 0) + sum(match_result_vector)) / (enemy_picks.get(hero_code, 0) + len(match_result_vector))
     enemy_pick_winrate = Counter(enemy_pick_winrate)
-    
+
     match_summary = {
         "username": username,
         "server": server,
@@ -160,21 +160,21 @@ def user_summary(username, server):
         "win_rate": f"{round(wins_n/matches_n*100,1)}%",
         "icon": f"hero_images/{user.profile_hero_code}.png"
     }
-    
+
     rank_history = [{
         "date": "",
         "rank": match.points_after_match
     } for match in matches.matches]
-    
+
     def create_picks_list(picks_list):
         picks_dicts = []
-        
+
         picks = matches.get_all_own_pick_counts()
         wins = matches.get_all_own_pick_win_counts()
         matchups = matches.get_all_matchup_counts()
         matchups_wins = matches.get_all_matchup_win_counts()
         for code in picks_list:
-            
+
             matchups = matches.get_matchup_counts(code)
             matchups_wins = matches.get_matchup_win_counts(code)
             allies = matches.get_ally_counts(code)
@@ -189,7 +189,7 @@ def user_summary(username, server):
                 if hero_code != "total":
                     matchup_winrate[hero_code] = (matchups_wins[hero_code] + sum(match_result_vector)) / (matchups[hero_code] + len(match_result_vector))
             matchup_winrate = Counter(matchup_winrate)
-            
+
             best_allies = allies_winrate.most_common(3)
             worst_allies = n_lowest_winrates(allies_winrate, 3)
             best_enemies = matchup_winrate.most_common(3)
@@ -213,12 +213,12 @@ def user_summary(username, server):
                 for enemy in worst_enemies]
             })
         return picks_dicts
-    
+
     def create_enemies_list(enemies_list):
         picks_dicts = []
         enemy_picks = matches.get_all_enemy_pick_counts()
         enemy_wins_against = matches.get_all_enemy_pick_win_against_counts()
-        
+
         for code in enemies_list:
             picks_dicts.append({
                 "name": hero_list.get_hero_by_code(code).name,
@@ -227,16 +227,16 @@ def user_summary(username, server):
                 "losses": enemy_picks[code] - enemy_wins_against[code]
             })
         return picks_dicts
-    
+
     best_picks_list = create_picks_list([x[0] for x in matchup_winrate.most_common(10)])
     worst_picks_list = create_picks_list([x[0] for x in n_lowest_winrates(matchup_winrate, 10)])
     best_enemies_list = create_enemies_list([x[0] for x in enemy_pick_winrate.most_common(10)])
     worst_enemies_list = create_enemies_list([x[0] for x in n_lowest_winrates(enemy_pick_winrate, 10)])
-    return render_template("summary.html", 
-                           summary=match_summary, 
-                           rank_history=rank_history, 
-                           best_picks=best_picks_list, 
-                           worst_picks=worst_picks_list, 
+    return render_template("summary.html",
+                           summary=match_summary,
+                           rank_history=rank_history,
+                           best_picks=best_picks_list,
+                           worst_picks=worst_picks_list,
                            best_enemies=best_enemies_list,
                            worst_enemies=worst_enemies_list
                            )
@@ -252,10 +252,10 @@ def legenddata():
     global legend_data, legend_data_update_time, nmf, transformed_legend_picks
     if twelve_hours_from_last_update(legend_data_update_time):
         legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
-        
+
     presence = Counter(legend_data["presence"])
     match_results = legend_data["match_result_vector"]
-    
+
     picks = Counter(legend_data["picks"])
     wins = Counter(legend_data["wins"])
 
@@ -273,7 +273,7 @@ def legenddata():
 
     first_picks = Counter(legend_data["first_picks"])
     first_picks_wins = Counter(legend_data["first_picks_wins"])
-    
+
     winrate = get_predicted_winrate(picks, wins, int(sum(wins.values())/5), int(sum(picks.values())/5))
     winrate_early_picks = get_predicted_winrate(early_picks, early_picks_wins, int(sum(early_picks_wins.values())/5), int(sum(early_picks.values())/5))
     winrate_third_picks = get_predicted_winrate(third_picks, third_picks_wins, int(sum(third_picks_wins.values())/5), int(sum(third_picks.values())/5))
@@ -283,33 +283,33 @@ def legenddata():
 
     n_games = len(match_results)
     n_wins = sum(match_results)
-    
+
     def create_picks_list(picks, wins, winrate, n):
         result = {
             "best": [
                 {
-                    "name": hero_list.get_hero_by_code(pick[0]).name, 
-                    "icon": f"{pick[0]}.png", 
-                    "wins": wins[pick[0]], 
+                    "name": hero_list.get_hero_by_code(pick[0]).name,
+                    "icon": f"{pick[0]}.png",
+                    "wins": wins[pick[0]],
                     "losses": picks[pick[0]] - wins[pick[0]],
                     "winrate": round(100 * wins[pick[0]] / picks[pick[0]], 1)
                  } for pick in winrate.most_common(n)],
             "worst": [
                 {
-                    "name": hero_list.get_hero_by_code(pick[0]).name, 
-                    "icon": f"{pick[0]}.png", 
-                    "wins": wins[pick[0]], 
+                    "name": hero_list.get_hero_by_code(pick[0]).name,
+                    "icon": f"{pick[0]}.png",
+                    "wins": wins[pick[0]],
                     "losses": picks[pick[0]] - wins[pick[0]],
                     "winrate": round(100 * wins[pick[0]] / picks[pick[0]], 1)
                 } for pick in n_lowest_winrates(winrate, n)]
         }
         return result
-    
+
     return render_template("legenddata.html",
-                           general_stats={"matches": n_games, "wins": n_wins, "losses": n_games-n_wins, "winrate": round(100*n_wins/n_games,1)}, 
+                           general_stats={"matches": n_games, "wins": n_wins, "losses": n_games-n_wins, "winrate": round(100*n_wins/n_games,1)},
                            general_data=create_picks_list(picks, wins, winrate, 5),
                            presence_data=[{
-                                        "name": hero_list.get_hero_by_code(pick[0]).name, 
+                                        "name": hero_list.get_hero_by_code(pick[0]).name,
                                         "icon": f"{pick[0]}.png",
                                         "presence_amount": pick[1],
                                         "presence": round(pick[1] / n_games * 100, 1)

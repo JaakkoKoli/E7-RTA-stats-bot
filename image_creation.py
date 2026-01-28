@@ -65,7 +65,7 @@ class ImageCreation:
         best_allies = allies_winrate.most_common(5)
         for i in range(5):
             if i<len(best_allies):
-                icon = get_hero_img(best_allies[i][0])
+                icon = self.resource_handler.get_hero_image(best_allies[i][0])
                 axes[0, i+1].imshow(icon)
                 axes[0, i+1].text(0.5, -0.4, f"{allies_wins[best_allies[i][0]]} - {allies[best_allies[i][0]] - allies_wins[best_allies[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
                 axes[0, i+1].text(0.5, -0.7, f"{round(100*allies_wins[best_allies[i][0]]/allies[best_allies[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
@@ -76,7 +76,7 @@ class ImageCreation:
         worst_allies = self.n_lowest_winrates(allies_winrate, 5)
         for i in range(5):
             if i<len(worst_allies):
-                icon = get_hero_img(worst_allies[i][0])
+                icon = self.resource_handler.get_hero_image(worst_allies[i][0])
                 axes[1, i+1].imshow(icon)
                 axes[1, i+1].text(0.5, -0.4, f"{allies_wins[worst_allies[i][0]]} - {allies[worst_allies[i][0]] - allies_wins[worst_allies[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
                 axes[1, i+1].text(0.5, -0.7, f"{round(100*allies_wins[worst_allies[i][0]]/allies[worst_allies[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
@@ -87,7 +87,7 @@ class ImageCreation:
         best_enemies = matchup_winrate.most_common(5)
         for i in range(5):
             if i<len(best_enemies):
-                icon = get_hero_img(best_enemies[i][0])
+                icon = self.resource_handler.get_hero_image(best_enemies[i][0])
                 axes[2, i+1].imshow(icon)
                 axes[2, i+1].text(0.5, -0.4, f"{matchups_wins[best_enemies[i][0]]} - {matchups[best_enemies[i][0]] - matchups_wins[best_enemies[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
                 axes[2, i+1].text(0.5, -0.7, f"{round(100*matchups_wins[best_enemies[i][0]]/matchups[best_enemies[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
@@ -98,7 +98,7 @@ class ImageCreation:
         worst_enemies = self.n_lowest_winrates(matchup_winrate, 5)
         for i in range(5):
             if i<len(worst_enemies):
-                icon = get_hero_img(worst_enemies[i][0])
+                icon = self.resource_handler.get_hero_image(worst_enemies[i][0])
                 axes[3, i+1].imshow(icon)
                 axes[3, i+1].text(0.5, -0.4, f"{matchups_wins[worst_enemies[i][0]]} - {matchups[worst_enemies[i][0]] - matchups_wins[worst_enemies[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
                 axes[3, i+1].text(0.5, -0.7, f"{round(100*matchups_wins[worst_enemies[i][0]]/matchups[worst_enemies[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
@@ -183,7 +183,7 @@ class ImageCreation:
         
         for i in range(5):
             if i<len(top_picks):
-                icon = get_hero_img(top_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_picks[i][0])
                 axes[1, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{top_picks[i][1]}", fontsize=fontsize_s+2, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
             axes[1, i+1].axis('off')
@@ -193,7 +193,7 @@ class ImageCreation:
         top_first_picks = first_picks.most_common(5)
         for i in range(5):
             if i<len(top_first_picks):
-                icon = get_hero_img(top_first_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_first_picks[i][0])
                 axes[2, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{top_first_picks[i][1]}", fontsize=fontsize_s+2, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
             axes[2, i+1].axis('off')
@@ -203,7 +203,7 @@ class ImageCreation:
         top_prebans = prebans.most_common(5)
         for i in range(5):
             if i<len(top_prebans):
-                icon = get_hero_img(top_prebans[i][0])
+                icon = self.resource_handler.get_hero_image(top_prebans[i][0])
                 axes[3, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{top_prebans[i][1]}", fontsize=fontsize_s+2, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
             axes[3, i+1].axis('off')
@@ -214,7 +214,7 @@ class ImageCreation:
         best_picks = matchup_winrate.most_common(5)
         for i in range(5):
             if i<len(best_picks):
-                icon = get_hero_img(best_picks[i][0])
+                icon = self.resource_handler.get_hero_image(best_picks[i][0])
                 axes[4, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{wins[best_picks[i][0]]}-{picks[best_picks[i][0]]-wins[best_picks[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[4, i+1].transAxes, color=textcol)
             axes[4, i+1].axis('off')
@@ -225,7 +225,7 @@ class ImageCreation:
         worst_picks = self.n_lowest_winrates(matchup_winrate, 5)
         for i in range(5):
             if i<len(worst_picks):
-                icon = get_hero_img(worst_picks[i][0])
+                icon = self.resource_handler.get_hero_image(worst_picks[i][0])
                 axes[5, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{wins[worst_picks[i][0]]}-{picks[worst_picks[i][0]]-wins[worst_picks[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
             axes[5, i+1].axis('off')
@@ -235,7 +235,7 @@ class ImageCreation:
         best_matchups = enemy_pick_winrate.most_common(5)
         for i in range(5):
             if i<len(best_matchups):
-                icon = get_hero_img(best_matchups[i][0])
+                icon = self.resource_handler.get_hero_image(best_matchups[i][0])
                 axes[6, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{enemy_wins[best_matchups[i][0]]}-{enemy_picks[best_matchups[i][0]]-enemy_wins[best_matchups[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
             axes[6, i+1].axis('off')
@@ -245,7 +245,7 @@ class ImageCreation:
         worst_matchups = self.n_lowest_winrates(enemy_pick_winrate, 5)
         for i in range(5):
             if i<len(worst_matchups):
-                icon = get_hero_img(worst_matchups[i][0])
+                icon = self.resource_handler.get_hero_image(worst_matchups[i][0])
                 axes[7, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{enemy_wins[worst_matchups[i][0]]}-{enemy_picks[worst_matchups[i][0]]-enemy_wins[worst_matchups[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[7, i+1].transAxes, color=textcol)
             axes[7, i+1].axis('off')
@@ -289,11 +289,11 @@ class ImageCreation:
         best_trios = trios_winrate.most_common(5)
 
         for i in range(len(best_trios)):
-            icon = get_hero_img(list(best_trios[i][0])[0])
+            icon = self.resource_handler.get_hero_image(list(best_trios[i][0])[0])
             axes[i, 1].imshow(icon)
-            icon = get_hero_img(list(best_trios[i][0])[1])
+            icon = self.resource_handler.get_hero_image(list(best_trios[i][0])[1])
             axes[i, 2].imshow(icon)
-            icon = get_hero_img(list(best_trios[i][0])[2])
+            icon = self.resource_handler.get_hero_image(list(best_trios[i][0])[2])
             axes[i, 3].imshow(icon)
             axes[i, 4].text(0.5, 0.3, f"{trios_wins[best_trios[i][0]]}-{trios_picks[best_trios[i][0]]-trios_wins[best_trios[i][0]]} ({round(100*trios_wins[best_trios[i][0]]/trios_picks[best_trios[i][0]])}%)", fontsize=fontsize_s+2, ha='center', transform=axes[i, 4].transAxes, color=textcol)
             axes[i, 0].axis('off')
@@ -309,11 +309,11 @@ class ImageCreation:
         worst_trios = trios_winrate.most_common(5)
         axes[5, 0].text(-0.5, 0.5, "Worst trios", fontsize=30, va='center', transform=axes[5, 0].transAxes, color=textcol)
         for i in range(5):
-            icon = get_hero_img(list(worst_trios[i][0])[0])
+            icon = self.resource_handler.get_hero_image(list(worst_trios[i][0])[0])
             axes[i+5, 1].imshow(icon)
-            icon = get_hero_img(list(worst_trios[i][0])[1])
+            icon = self.resource_handler.get_hero_image(list(worst_trios[i][0])[1])
             axes[i+5, 2].imshow(icon)
-            icon = get_hero_img(list(worst_trios[i][0])[2])
+            icon = self.resource_handler.get_hero_image(list(worst_trios[i][0])[2])
             axes[i+5, 3].imshow(icon)
             axes[i+5, 4].text(0.5, 0.3, f"{trios_wins[worst_trios[i][0]]}-{trios_picks[worst_trios[i][0]]-trios_wins[worst_trios[i][0]]} ({round(100*trios_wins[worst_trios[i][0]]/trios_picks[worst_trios[i][0]])}%)", fontsize=fontsize_s+2, ha='center', transform=axes[i+5, 4].transAxes, color=textcol)
             axes[i+5, 0].axis('off')
@@ -397,7 +397,7 @@ class ImageCreation:
         top_picks = winrate.most_common(5)
         for i in range(5):
             if i<len(top_picks):
-                icon = get_hero_img(top_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_picks[i][0])
                 axes[1, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*wins[top_picks[i][0]]/picks[top_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
             axes[1, i+1].axis('off')
@@ -407,7 +407,7 @@ class ImageCreation:
         top_early_picks = winrate_early_picks.most_common(5)
         for i in range(5):
             if i<len(top_early_picks):
-                icon = get_hero_img(top_early_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_early_picks[i][0])
                 axes[2, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*early_picks_wins[top_early_picks[i][0]]/early_picks[top_early_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
             axes[2, i+1].axis('off')
@@ -417,7 +417,7 @@ class ImageCreation:
         top_third_picks = winrate_third_picks.most_common(5)
         for i in range(5):
             if i<len(top_third_picks):
-                icon = get_hero_img(top_third_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_third_picks[i][0])
                 axes[3, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*third_picks_wins[top_third_picks[i][0]]/third_picks[top_third_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
             axes[3, i+1].axis('off')
@@ -427,7 +427,7 @@ class ImageCreation:
         top_late_picks = winrate_late_picks.most_common(5)
         for i in range(5):
             if i<len(top_late_picks):
-                icon = get_hero_img(top_late_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_late_picks[i][0])
                 axes[4, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*late_picks_wins[top_late_picks[i][0]]/late_picks[top_late_picks[i][0]],1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[4, i+1].transAxes, color=textcol)
             axes[4, i+1].axis('off')
@@ -438,7 +438,7 @@ class ImageCreation:
         top_prebans = prebans_all.most_common(5)
         for i in range(5):
             if i<len(top_prebans):
-                icon = get_hero_img(top_prebans[i][0])
+                icon = self.resource_handler.get_hero_image(top_prebans[i][0])
                 axes[5, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*prebans_all[top_prebans[i][0]]/n_games,1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[5, i+1].transAxes, color=textcol)
             axes[5, i+1].axis('off')
@@ -448,7 +448,7 @@ class ImageCreation:
         top_first_picks = first_picks_all.most_common(5)
         for i in range(5):
             if i<len(top_first_picks):
-                icon = get_hero_img(top_first_picks[i][0])
+                icon = self.resource_handler.get_hero_image(top_first_picks[i][0])
                 axes[6, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*first_picks_all[top_first_picks[i][0]]/(n_games),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[6, i+1].transAxes, color=textcol)
             axes[6, i+1].axis('off')
@@ -458,7 +458,7 @@ class ImageCreation:
         top_presence = presence.most_common(5)
         for i in range(5):
             if i<len(top_presence):
-                icon = get_hero_img(top_presence[i][0])
+                icon = self.resource_handler.get_hero_image(top_presence[i][0])
                 axes[7, i+1].imshow(icon)
                 axes[0, i+1].text(0.6, -0.6, f"{round(100*presence[top_presence[i][0]]/(n_games),1)}%", fontsize=fontsize_s+2, ha='center', transform=axes[7, i+1].transAxes, color=textcol)
             axes[7, i+1].axis('off')
@@ -650,7 +650,7 @@ class ImageCreation:
         best_own_bans = own_ban_winrate_counts.most_common(5)
         for i in range(5):
             if i<len(best_own_bans):
-                icon = get_hero_img(best_own_bans[i][0])
+                icon = self.resource_handler.get_hero_image(best_own_bans[i][0])
                 axes[0, i+1].imshow(icon)
                 axes[0, i+1].text(0.5, -0.4, f"{own_ban_win_counts[best_own_bans[i][0]]} - {own_ban_counts[best_own_bans[i][0]] - own_ban_win_counts[best_own_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
                 axes[0, i+1].text(0.5, -0.7, f"{round(100*own_ban_win_counts[best_own_bans[i][0]]/own_ban_counts[best_own_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[0, i+1].transAxes, color=textcol)
@@ -662,7 +662,7 @@ class ImageCreation:
         worst_own_bans = self.n_lowest_winrates(own_ban_winrate_counts, 5)
         for i in range(5):
             if i<len(worst_own_bans):
-                icon = get_hero_img(worst_own_bans[i][0])
+                icon = self.resource_handler.get_hero_image(worst_own_bans[i][0])
                 axes[1, i+1].imshow(icon)
                 axes[1, i+1].text(0.5, -0.4, f"{own_ban_win_counts[worst_own_bans[i][0]]} - {own_ban_counts[worst_own_bans[i][0]] - own_ban_win_counts[worst_own_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
                 axes[1, i+1].text(0.5, -0.7, f"{round(100*own_ban_win_counts[worst_own_bans[i][0]]/own_ban_counts[worst_own_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[1, i+1].transAxes, color=textcol)
@@ -674,7 +674,7 @@ class ImageCreation:
         best_enemy_bans = enemy_ban_winrate_counts.most_common(5)
         for i in range(5):
             if i<len(best_enemy_bans):
-                icon = get_hero_img(best_enemy_bans[i][0])
+                icon = self.resource_handler.get_hero_image(best_enemy_bans[i][0])
                 axes[2, i+1].imshow(icon)
                 axes[2, i+1].text(0.5, -0.4, f"{enemy_ban_win_counts[best_enemy_bans[i][0]]} - {enemy_ban_counts[best_enemy_bans[i][0]] - enemy_ban_win_counts[best_enemy_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
                 axes[2, i+1].text(0.5, -0.7, f"{round(100*enemy_ban_win_counts[best_enemy_bans[i][0]]/enemy_ban_counts[best_enemy_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[2, i+1].transAxes, color=textcol)
@@ -686,7 +686,7 @@ class ImageCreation:
         worst_enemy_bans = self.n_lowest_winrates(enemy_ban_winrate_counts, 5)
         for i in range(5):
             if i<len(worst_enemy_bans):
-                icon = get_hero_img(worst_enemy_bans[i][0])
+                icon = self.resource_handler.get_hero_image(worst_enemy_bans[i][0])
                 axes[3, i+1].imshow(icon)
                 axes[3, i+1].text(0.5, -0.4, f"{enemy_ban_win_counts[worst_enemy_bans[i][0]]} - {enemy_ban_counts[worst_enemy_bans[i][0]] - enemy_ban_win_counts[worst_enemy_bans[i][0]]}", fontsize=fontsize_s+2, ha='center', transform=axes[3, i+1].transAxes, color=textcol)
                 axes[3, i+1].text(0.5, -0.7, f"{round(100*enemy_ban_win_counts[worst_enemy_bans[i][0]]/enemy_ban_counts[worst_enemy_bans[i][0]])}%", fontsize=fontsize_s, ha='center', transform=axes[3, i+1].transAxes, color=textcol)

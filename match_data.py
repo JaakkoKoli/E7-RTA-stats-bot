@@ -32,6 +32,11 @@ class Match:
         self.points = match_data["winScore"]
         self.win:bool = match_data["iswin"] == 1
         self.points_after_match:int = int(match_data["winScore"])
+        self.turns:int = int(match_data["turn"])
+        self.duration_seconds:int = int(match_data["battle_time"])
+        self.rank_own:str = match_data["grade_code"]
+        self.rank_enemy:str = match_data["enemy_grade_code"]
+        self.server_enemy:str = match_data["enemy_world_code"].split("world_")[1]
     
     def get_own_picks_codes(self) -> list[str]:
         return [x.hero_code for x in self.picks_own]

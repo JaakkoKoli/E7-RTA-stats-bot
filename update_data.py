@@ -12,7 +12,7 @@ def save_image_from_url(url:str, file_path:str) -> None:
         print("Failed to download image")
 
 def get_new_heroname_json() -> None:
-    response = requests.get("http://static.smilegatemegaport.com/gameRecord/epic7/epic7_hero.json")
+    response = requests.get("https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json")
     if response.status_code == 200:
         with open("data/heronames.json", 'w') as file:
             json.dump(response.json()["en"], file)
@@ -30,7 +30,7 @@ def get_herocodes() -> list[str]:
     return herocodes
 
 def get_new_userdata(server:str) -> None:
-    response = requests.get(f"https://static.smilegatemegaport.com/gameRecord/epic7/epic7_user_world_{server}.json")
+    response = requests.get(f"https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_user_world_{server}.json")
     if response.status_code == 200:
         with open(f"data/epic7_user_world_{server}.json", 'w') as file:
             json.dump(response.json(), file)

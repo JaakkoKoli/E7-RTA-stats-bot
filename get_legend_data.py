@@ -14,11 +14,11 @@ def get_legend_players() -> tuple[list[int], list[str]]:
     try:
         for i in range(10):
             response = requests.post(
-            f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code={current_season_code}&world_code=all&current_page={i+1}&lang=en"
+            f"https://e7api.onstove.com/gameApi/getWorldUserRankingDetail?season_code={current_season_code}&world_code=all&current_page={i+1}&lang=en"
             )
-            if len(response.json()["result_body"]) == 0:
+            if len(response.json()["value"]["result_body"]) == 0:
                 response = requests.post(
-                f"https://epic7.onstove.com/gg/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss17&world_code=all&current_page={i+1}&lang=en"
+                f"https://e7api.onstove.com/gameApi/getWorldUserRankingDetail?season_code=pvp_rta_ss17&world_code=all&current_page={i+1}&lang=en"
                 )
             if response.status_code == 200:
                 responses += [response.json()]
@@ -29,7 +29,7 @@ def get_legend_players() -> tuple[list[int], list[str]]:
     user_ids = []
     user_servers = []
     for page in responses:
-        for player_data in page["result_body"]:
+        for player_data in page["value"]["result_body"]:
             user_ids += [player_data["nick_no"]]
             user_servers += [player_data["world_code"].replace("world_","")]
     return user_ids, user_servers
@@ -53,8 +53,8 @@ match_list_all = []
 for i in range(len(legend_player_ids)):
     response = get_match_data_by_user_id(legend_player_ids[i], legend_player_servers[i])
     if response.status_code == 200:
-        match_list += [response.json()["result_body"]["battle_list"]]
-        match_list_all += response.json()["result_body"]["battle_list"]
+        match_list += [response.json()["value"]["result_body"]["battle_list"]]
+        match_list_all += response.json()["value"]["result_body"]["battle_list"]
 
 legend_player_pick_vectors = {}
 legend_player_prebans = {}
@@ -94,6 +94,9 @@ first_picks = matches.get_all_own_first_pick_counts()
 first_picks_all = matches.get_all_first_pick_counts()
 first_picks_wins = matches.get_all_own_first_pick_win_counts()
 
+match_durations = [match.duration_seconds for match in matches.matches]
+turns = [match.turns for match in matches.matches]
+
 combinations = matches.get_own_combinations_picks()
 combinations_wins = matches.get_own_combinations_wins()
 
@@ -128,6 +131,8 @@ legend_data = {"match_result_vector": match_results,
                "first_picks_wins": first_picks_wins,
                "pick_vectors": legend_player_pick_vectors,
                "individual_prebans": legend_player_prebans,
+               "match_durations": match_durations,
+               "turns": turns,
                "combinations": combinations_,
                "combinations_wins": combinations_wins_,
                "combinations_keys": combinations_dict_,
