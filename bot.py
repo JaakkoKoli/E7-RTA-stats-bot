@@ -33,39 +33,17 @@ if not os.path.isfile("data/points.json"):
 # Load environmental variable(s)
 load_dotenv()
 
-# Update hero data, check if new image(s) need to be downloaded
-hero_popularity = HeroPopularity()
-if os.path.isfile("data/hero_popularity.json"):
-    hero_popularity.load_popularity()
 
 resource_handler = ResourceHandler()
+
+resource_handler.initialise_data()
 
 hero_list = resource_handler.hero_list
 hero_dict = hero_list.get_hero_vector_dict()
 
-# Load and update user data, and create a search index
-user_data = UserData()
-points = Points()
-points.load_points()
-server_list = ["global", "asia", "jpn", "kor", "eu"]
-for server in server_list:
-    get_new_userdata(server)
-    with open(f"data/epic7_user_world_{server}.json", "r") as json_file:
-        server_user_data = json.load(json_file)
-        user_data.read_data(server_user_data, server)
-print("Creating search index for user data.")
-user_data.create_search_index()
-print("Loading points")
-user_data.load_points(points.points)
-
-print("Loading search history")
-# Initiate search history and load if previous data exists
-search_history = SearchHistory()
-if os.path.exists("data/search_history.json"):
-    search_history.load_search_history()
 
 print("Preparing image creation.")
-image_creation = ImageCreation(resource_handler, user_data)
+image_creation = ImageCreation(resource_handler, resource_handler.user_data)
 
 print("Loading legend data")
 def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
@@ -83,6 +61,10 @@ def get_legend_game_lengths():
 def twelve_hours_from_last_update(last_update:datetime) -> bool:
     return datetime.now() - last_update >= timedelta(hours=12)
 
+def week_from_last_update(last_update:datetime) -> bool:
+    return datetime.now() - last_update >= timedelta(days=7)
+
+user_data_update_time = datetime.now()
 legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
 legend_durations, legend_turns = get_legend_game_lengths()
 
@@ -138,21 +120,11 @@ def get_next_artifact_shop_rotation() -> datetime:
 
 def get_next_maintenance_time() -> datetime:
     base = datetime.fromtimestamp(1759978800)
-    two_weeks = timedelta(days=14)
+    two_weeks = timedelta(days=21)
     return get_next_time(base, two_weeks)
 
 def get_next_sidestory_time() -> datetime:
     base = datetime.fromtimestamp(1759374000)
-    two_weeks = timedelta(days=14)
-    return get_next_time(base, two_weeks)
-
-def get_next_hot_reset_time() -> datetime:
-    base = datetime.fromtimestamp(1759114800)
-    two_weeks = timedelta(days=14)
-    return get_next_time(base, two_weeks)
-
-def get_next_automaton_tower_reset_time() -> datetime:
-    base = datetime.fromtimestamp(1759719600)
     two_weeks = timedelta(days=14)
     return get_next_time(base, two_weeks)
 
@@ -191,14 +163,14 @@ async def links(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
-        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)\n[Skill Multiplier Spreadsheet](<https://docs.google.com/spreadsheets/d/e/2PACX-1vRWZw_BeIhf32W9UIyPuyrr1VDeBuX6p1Nzxov4-5Pkt5DplChLovysSDN83mGVbsZ0XgYs2FICuRXA/pubhtml>)")
+        await ctx.response.send_message("# Official useful links\n[News](<https://page.onstove.com/epicseven/global/list/e7en001?listType=2&direction=latest&page=1>)\n[YouTube (EN)](<https://www.youtube.com/@EpicSeven>)\n[YouTube (JP)](<https://www.youtube.com/@EpicSevenJP>)\n[RTA Match History](<https://epic7.onstove.com/en/gg>)\n[Redeem coupons](<https://epic7.onstove.com/en/coupon>)\n[Redeem Twitch drops](<https://epic7.onstove.com/en/twitchdrops>)\n\n# Unofficial useful links\n[Damage Calculator](<https://e7calc.xyz/>)\n[Fribbels Gear Optimiser](<https://github.com/fribbels/Fribbels-Epic-7-Optimizer>)\n[Fribbels Hero Library](<https://fribbels.github.io/e7/hero-library.html>)\n[CeciliaBot - hero stats, timeline, etc.](<https://ceciliabot.github.io/#/>)")
 
 @tree.command(name="timers", description="Timers for different activities.")
 async def timers(ctx:discord.Interaction):
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('https://www.google.com/search?q=am+i+dumb')
     else:
-        response = f"# Regular Content\nServer reset times: Global <t:{int(get_next_hour(10).timestamp())}:R> - Europe: <t:{int(get_next_hour(3).timestamp())}:R> - Asia, Japan, Korea: <t:{int(get_next_hour(18).timestamp())}:R>\nAutomaton Tower: Global <t:{int(get_global_reset_time(get_next_automaton_tower_reset_time()).timestamp())}:R> - Europe <t:{int(get_next_automaton_tower_reset_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_automaton_tower_reset_time()).timestamp())}:R>\nHall of Trials: Global <t:{int(get_global_reset_time(get_next_hot_reset_time()).timestamp())}:R> - Europe <t:{int(get_next_hot_reset_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_hot_reset_time()).timestamp())}:R>\nBiweekly sidestory: <t:{int(get_next_sidestory_time().timestamp())}:R>\nMaintenance: <t:{int(get_next_maintenance_time().timestamp())}:R>\nExpeditions: Global <t:{int(get_global_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Europe <t:{int((get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R>\nTrial of Constellations: Global <t:{int(get_global_reset_time(get_next_month_time()).timestamp())}:R> - Europe <t:{int(get_next_month_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time()).timestamp())}:R>\n\n# Shops \nCoin shops: <t:{int(get_next_month_time().timestamp())}:R>\nPowder shop: <t:{int(get_next_artifact_shop_rotation().timestamp())}:R>"
+        response = f"# Regular Content\nServer reset times: Global <t:{int(get_next_hour(10).timestamp())}:R> - Europe: <t:{int(get_next_hour(3).timestamp())}:R> - Asia, Japan, Korea: <t:{int(get_next_hour(18).timestamp())}:R>\nBiweekly sidestory: <t:{int(get_next_sidestory_time().timestamp())}:R>\nMaintenance: <t:{int(get_next_maintenance_time().timestamp())}:R>\nExpeditions: Global <t:{int(get_global_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Europe <t:{int((get_next_month_time() - timedelta(hours=5)).timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time() - timedelta(hours=5)).timestamp())}:R>\nTrial of Constellations: Global <t:{int(get_global_reset_time(get_next_month_time()).timestamp())}:R> - Europe <t:{int(get_next_month_time().timestamp())}:R> - Asia, Japan, Korea <t:{int(get_asia_reset_time(get_next_month_time()).timestamp())}:R>\n\n# Shops \nCoin shops: <t:{int(get_next_month_time().timestamp())}:R>\nPowder shop: <t:{int(get_next_artifact_shop_rotation().timestamp())}:R>"
         await ctx.response.send_message(response)
 
 
@@ -212,13 +184,13 @@ async def shitpost(ctx:discord.Interaction):
 
 async def name_autocomplete(ctx:discord.Interaction, current:str):
     data = []
-    history = search_history.get_user_history(ctx.user.id)
+    history = resource_handler.search_history.get_user_history(ctx.user.id)
     # if nothing typed, recommend previous searches
     if len(current) == 0:
         for entry in history:
             data.append(app_commands.Choice(name=entry, value=entry))
     else:
-        users = user_data.find_user(current)
+        users = resource_handler.user_data.find_user(current)
         usernames = [user.name for user in users]
         # Add if some name matches the search exactly
         if current in usernames:
@@ -254,9 +226,14 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         darkmode = False
     else:
         darkmode = True
-
+    
+    global user_data_update_time
+    if week_from_last_update(user_data_update_time):
+        resource_handler.initialise_data()
+        user_data_update_time = timedelta.now()
+    
     user_name_and_server = nickname.rsplit("#", 1)
-    user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+    user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
         await ctx.response.send_message('Just dm them for the free win, you should know how to do that right?')
     else:
@@ -271,11 +248,11 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
                     durations = np.median([match.duration_seconds for match in matches.matches])
                     turns = np.median([match.turns for match in matches.matches])
 
-                    points.points[str(user.id)] = int(matches.matches[0].points)
+                    resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
                     user.points = int(matches.matches[0].points)
-                    points.save_points()
-                    search_history.add_search_query(ctx.user.id, nickname)
-                    search_history.save_search_history()
+                    resource_handler.points.save_points()
+                    resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+                    resource_handler.search_history.save_search_history()
                     
                     global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
                     with io.BytesIO() as image_binary:
@@ -306,11 +283,65 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         else:
             await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
+@tree.command(name="ropinginfo", description="Gives information about the player's match length.")
+@app_commands.autocomplete(darkmode=darkmode_autocomplete)
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
+    if darkmode == "off":
+        darkmode = False
+    else:
+        darkmode = True
+
+    user_name_and_server = nickname.rsplit("#", 1)
+    user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('Just dm them for the free win, you should know how to do that right?')
+    else:
+        if user is not None:
+            try:
+                await ctx.response.defer()
+                image, matches = image_creation.create_match_length_summary_image(user, darkmode)
+                if image is not None:
+                    match_result_vector = matches.get_match_result_vector()
+                    durations = np.median([match.duration_seconds for match in matches.matches])
+                    turns = np.median([match.turns for match in matches.matches])
+
+                    resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
+                    user.points = int(matches.matches[0].points)
+                    resource_handler.points.save_points()
+                    resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+                    resource_handler.search_history.save_search_history()
+                    
+                    global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
+                    with io.BytesIO() as image_binary:
+                        image.save(image_binary, 'PNG')
+                        image_binary.seek(0)
+
+                        response_text = f"""
+                        Roping info for **{user.name.capitalize()} ({user.server})**
+
+                        Winrate: {round(100.0*sum(match_result_vector)/len(match_result_vector))}%
+                        Average game: {int(turns)} turns / {round(durations/60,1)} minutes
+                        Longest game: {max([match.turns for match in matches.matches])} turns / {round(max([match.duration_seconds for match in matches.matches])/60,1)} minutes
+                        Rope score: {max(0, min(100, round(50 + 50 * ((durations - legend_durations[0])/legend_durations[1] * 0.8 + (turns - legend_turns[0])/legend_turns[1] *0.2),1)))} / 100"""
+
+                        await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
+                    if twelve_hours_from_last_update(legend_data_update_time):
+                        legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                        legend_durations, legend_turns = get_legend_game_lengths()
+                else:
+                    await ctx.followup.send('This player has not played enough games.')
+            except Exception as e:
+                print(e)
+                await ctx.followup.send('This player has not played enough games.')
+
+        else:
+            await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
     data = []
-    search_results = hero_list.find_up_to_n_most_popular_by_name(current, 3, hero_popularity)
+    search_results = hero_list.find_up_to_n_most_popular_by_name(current, 3, resource_handler.hero_popularity)
     for hero in search_results:
        data.append(app_commands.Choice(name=hero.name, value=hero.name))
     return data
@@ -328,19 +359,19 @@ async def analyze(ctx:discord.Interaction, nickname:str, hero:str, darkmode:str=
         await ctx.response.send_message('Analyze deez nuts lmao')
     else:
         user_name_and_server = nickname.rsplit("#", 1)
-        user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+        user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
         try:
             await ctx.response.defer()
             target_hero = hero_list.get_hero_by_name(hero)
             image, picks, wins, matches = image_creation.create_hero_analysis_image(user, target_hero.code, darkmode)
             if image is not None:
-                points.points[str(user.id)] = int(matches.matches[0].points)
+                resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
                 user.points = int(matches.matches[0].points)
-                points.save_points()
-                hero_popularity.increase_popularity(target_hero.code)
-                hero_popularity.save_popularity()
-                search_history.add_search_query(ctx.user.id, nickname)
-                search_history.save_search_history()
+                resource_handler.points.save_points()
+                resource_handler.hero_popularity.increase_popularity(target_hero.code)
+                resource_handler.hero_popularity.save_popularity()
+                resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+                resource_handler.search_history.save_search_history()
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')
                     image_binary.seek(0)
@@ -367,14 +398,14 @@ async def trios(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         try:
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
-            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
             image, matches = image_creation.create_trios_image(user, darkmode)
 
-            points.points[str(user.id)] = int(matches.matches[0].points)
+            resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
-            points.save_points()
-            search_history.add_search_query(ctx.user.id, nickname)
-            search_history.save_search_history()
+            resource_handler.points.save_points()
+            resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+            resource_handler.search_history.save_search_history()
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
@@ -397,14 +428,14 @@ async def bans(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         try:
             await ctx.response.defer()
             user_name_and_server = nickname.rsplit("#", 1)
-            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
             image, matches = image_creation.create_ban_summary_image(user, darkmode)
 
-            points.points[str(user.id)] = int(matches.matches[0].points)
+            resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
             user.points = int(matches.matches[0].points)
-            points.save_points()
-            search_history.add_search_query(ctx.user.id, nickname)
-            search_history.save_search_history()
+            resource_handler.points.save_points()
+            resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+            resource_handler.search_history.save_search_history()
             with io.BytesIO() as image_binary:
                 image.save(image_binary, 'PNG')
                 image_binary.seek(0)
@@ -464,10 +495,10 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
                     image_binary.seek(0)
                     await ctx.followup.send('', file=discord.File(fp=image_binary, filename='image.png'))
             else:
-                await ctx.followup.send('Not enough games played with the hero.')
+                await ctx.followup.send('Error: Not enough games played with the hero.')
         except Exception as e:
             print(e)
-            await ctx.followup.send('Not enough games played with the hero.')
+            await ctx.followup.send('Error: Not enough games played with the hero.')
 
 @tree.command(name="similarlegendplayers", description="Find legend players with similar play styles.")
 @app_commands.autocomplete(nickname=name_autocomplete)
@@ -478,7 +509,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
         try:
             await ctx.response.defer()
             user_name_and_server = nickname.lower().rsplit("#", 1)
-            user = user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+            user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
             response = get_match_data_by_user_id(user.id, user.server)
             if response.status_code == 200:
                 match_list = response.json()["value"]["result_body"]["battle_list"]
@@ -491,11 +522,11 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                     legend_durations, legend_turns = get_legend_game_lengths()
                 legend_prebans = legend_data["individual_prebans"]
 
-                points.points[str(user.id)] = int(matches.matches[0].points)
+                resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
                 user.points = int(matches.matches[0].points)
-                points.save_points()
-                search_history.add_search_query(ctx.user.id, nickname)
-                search_history.save_search_history()
+                resource_handler.points.save_points()
+                resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+                resource_handler.earch_history.save_search_history()
 
                 legend_players = list(legend_prebans.keys())
                 n = len(legend_players)
@@ -522,16 +553,16 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 users = []
                 for i in range(5):
                     user_id_and_server = legend_players[top_5_similiar[i]].rsplit("#", 1)
-                    users.append(user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
+                    users.append(resource_handler.user_data.get_user_by_id(user_id_and_server[0],user_id_and_server[1]))
                 response = f"5 most similar legend players for {user.name} ({user.server}): \n\n"
                 for i, u in enumerate(users):
                     response += f"{i+1} [{u.name} ({u.server})](<https://epic7.onstove.com/en/gg/battlerecord/world_{u.server}/{u.id}>) ({round(final_scores[top_5_similiar[i]], 1)})\n"
                 await ctx.followup.send(response)
             else:
-                await ctx.followup.send('Not enough games played.')
+                await ctx.followup.send('Error: Not enough games played or user not found.')
         except Exception as e:
             print(e)
-            await ctx.followup.send('Not enough games played.')
+            await ctx.followup.send('Error: Not enough games played or user not found.')
 
 async def cumulative_autocomplete(ctx:discord.Interaction, current:str):
     return [app_commands.Choice(name="yes", value="yes"), app_commands.Choice(name="no", value="no")]

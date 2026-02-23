@@ -1,4 +1,6 @@
 from hero_data import *
+from user_data import *
+from search_history import *
 import os
 from datetime import datetime, timedelta
 from PIL import Image
@@ -15,6 +17,10 @@ class ResourceHandler:
         self.download_all_missing_hero_images()
         self.image_codes = self.get_current_hero_image_codes()
         self.update_timestamp = datetime.now()
+        self.user_data = UserData()
+        self.points = Points()
+        self.hero_popularity = HeroPopularity()
+        self.search_history = SearchHistory()
 
 
     def read_hero_list(self) -> HeroList:
@@ -58,6 +64,43 @@ class ResourceHandler:
 
     def get_current_hero_image_codes(self) -> list[str]:
         return [f.split(".")[0] for f in os.listdir(self.image_location) if os.path.isfile(os.path.join(self.image_location, f))]
+
+    def get_userdata(self):
+        self.user_data = UserData()
+        self.points = Points()
+        self.points.load_points()
+        for server in ["global", "asia", "jpn", "kor", "eu"]:
+            with open(f"data/epic7_user_world_{server}.json", "r") as json_file:
+                server_user_data = json.load(json_file)
+                self.user_data.read_data(server_user_data, server)
+        self.user_data.create_search_index()
+        self.user_data.load_points(self.points.points)
+    
+    def download_userdata(self) -> None:
+        for server in ["global", "asia", "jpn", "kor", "eu"]:
+            response = requests.get(f"https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_user_world_{server}.json")
+            if response.status_code == 200:
+                with open(f"data/epic7_user_world_{server}.json", "w") as file:
+                    json.dump(response.json(), file)
+            else:
+                print(f"Failed to download file epic7_user_world_{server}.json")
+
+    def get_hero_popularity(self) -> None:
+        self.hero_popularity = HeroPopularity()
+        if os.path.isfile("data/hero_popularity.json"):
+            self.hero_popularity.load_popularity()
+            
+    def get_search_history(self) -> None:
+        self.search_history = SearchHistory()
+        if os.path.exists("data/search_history.json"):
+            self.search_history.load_search_history()
+
+    def initialise_data(self) -> None:
+        self.get_hero_popularity()
+        self.download_userdata()
+        self.get_userdata()
+        self.get_search_history()
+        self.get_hero_popularity()
 
     def twelve_hours_from_last_update(self) -> bool:
         return datetime.now() - self.update_timestamp >= timedelta(hours=12)

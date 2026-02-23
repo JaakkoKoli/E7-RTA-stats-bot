@@ -255,7 +255,58 @@ class ImageCreation:
         buf.seek(0)
         plt.close('all')
         return Image.open(buf), matches
+
+    def create_match_length_summary_image(self, user:User, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
+
+        matches = user.get_match_data(self.resource_handler.hero_list)
+        match_result_vector = matches.get_match_result_vector()
+        match_durations = [match.duration_seconds for match in matches.matches]
+        match_turns = [match.turns for match in matches.matches]
+
+        if darkmode:
+            plt.figure(figsize=(10, 6), facecolor="#313338")
+            ax = plt.gca()
+            ax.set_facecolor("#313338")
+            textcol = "#ffffff"
+        else:
+            plt.figure(figsize=(10, 6))
+            ax = plt.gca()
+            textcol = "#000000"
+
+        #ax.text(0.5, 0.5, "Winrate", fontsize=24, va='center', color=textcol)
+        winrate=sum(match_result_vector)/len(match_result_vector)
+        turn_amounts = list(set(match_turns))
+        rounding_factor = 20
+        rounded_durations = [int(round(dur/rounding_factor)*rounding_factor) for dur in match_durations]
+        max_duration = max(rounded_durations)
+        x = [i for i in range(0,800,rounding_factor)]
+        y = np.convolve([rounded_durations.count(i)+1 for i in x], [0.03, 0.05, 0.08, 0.15, 0.3, 0.15, 0.08, 0.05, 0.03], mode="same")
+        plt.plot(x, y, textcol, linewidth=2, label="Match duration")
+        plt.plot(x, max(y)*np.convolve([(sum([match_result_vector[i] for i,val in enumerate(rounded_durations) if val==x_value])+winrate)/(rounded_durations.count(x_value)+1.0) for x_value in x], [0.03, 0.05, 0.08, 0.15, 0.3, 0.15, 0.08, 0.05, 0.03], mode="same"), "cyan", linewidth=2)
+        plt.plot(x, [max(y)*0.5]*len(x), "lime")
+        plt.plot([np.median(match_durations)]*2, [0,max(y)], "darkred")
+        plt.xlabel("Duration (s)")
+        plt.yticks(None)
+        #plt.plot(turn_amounts, [match_turns.count(match) for match in turn_amounts])
+        plt.legend(["Amount of games", "Winrate", "50% winrate", "Average game"])
         
+        ax.set_yticks([])
+        
+        ax.spines['bottom'].set_color(textcol)
+        ax.spines['top'].set_color(textcol) 
+        ax.spines['right'].set_color(textcol)
+        ax.spines['left'].set_color(textcol)
+        ax.tick_params(axis='x', colors=textcol)
+        ax.tick_params(axis='y', colors=textcol)
+        ax.xaxis.label.set_color(textcol)
+        ax.yaxis.label.set_color(textcol)
+        ax.title.set_color(textcol)
+
+        buf = io.BytesIO()
+        plt.savefig(buf)
+        buf.seek(0)
+        plt.close('all')
+        return Image.open(buf), matches        
 
     def create_trios_image(self, user:User, darkmode:bool=False) -> tuple[np.ndarray, MatchHistory]:
         matches = user.get_match_data(self.resource_handler.hero_list)
