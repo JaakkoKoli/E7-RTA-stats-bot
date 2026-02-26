@@ -47,6 +47,8 @@ image_creation = ImageCreation(resource_handler, resource_handler.user_data)
 
 print("Loading legend data")
 def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
+    resource_handler.download_hero_list()
+    resource_handler.read_hero_list()
     with open("data/legend_data.json", "r") as json_file:
         legend_data = json.load(json_file)
     nmf = NMF(n_components=4, init="nndsvd", random_state=42)
@@ -526,7 +528,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 user.points = int(matches.matches[0].points)
                 resource_handler.points.save_points()
                 resource_handler.search_history.add_search_query(ctx.user.id, nickname)
-                resource_handler.earch_history.save_search_history()
+                resource_handler.search_history.save_search_history()
 
                 legend_players = list(legend_prebans.keys())
                 n = len(legend_players)

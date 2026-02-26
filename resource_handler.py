@@ -23,14 +23,14 @@ class ResourceHandler:
         self.search_history = SearchHistory()
 
 
-    def read_hero_list(self) -> HeroList:
+    def read_hero_list(self) -> None:
         with open(f"{self.data_location}heronames.json", "r") as json_file:
-            return HeroList(json.load(json_file))
+            self.hero_list = HeroList(json.load(json_file))
 
     def get_hero_image(self, hero_code:str) -> Image:
         if hero_code not in self.image_codes and self.twelve_hours_from_last_update():
             if self.download_hero_list():
-                self.hero_list = self.read_hero_list()
+                self.read_hero_list()
                 if self.download_hero_image(hero_code):
                     self.image_codes = self.get_current_hero_image_codes()
             self.update_timestamp = datetime.now()
@@ -65,7 +65,7 @@ class ResourceHandler:
     def get_current_hero_image_codes(self) -> list[str]:
         return [f.split(".")[0] for f in os.listdir(self.image_location) if os.path.isfile(os.path.join(self.image_location, f))]
 
-    def get_userdata(self):
+    def read_userdata(self):
         self.user_data = UserData()
         self.points = Points()
         self.points.load_points()
@@ -85,22 +85,24 @@ class ResourceHandler:
             else:
                 print(f"Failed to download file epic7_user_world_{server}.json")
 
-    def get_hero_popularity(self) -> None:
+    def read_hero_popularity(self) -> None:
         self.hero_popularity = HeroPopularity()
         if os.path.isfile("data/hero_popularity.json"):
             self.hero_popularity.load_popularity()
             
-    def get_search_history(self) -> None:
+    def read_search_history(self) -> None:
         self.search_history = SearchHistory()
         if os.path.exists("data/search_history.json"):
             self.search_history.load_search_history()
 
     def initialise_data(self) -> None:
-        self.get_hero_popularity()
+        self.download_hero_list()
+        self.read_hero_list()
+        self.read_hero_popularity()
         self.download_userdata()
-        self.get_userdata()
-        self.get_search_history()
-        self.get_hero_popularity()
+        self.read_userdata()
+        self.read_search_history()
+        self.read_hero_popularity()
 
     def twelve_hours_from_last_update(self) -> bool:
         return datetime.now() - self.update_timestamp >= timedelta(hours=12)
