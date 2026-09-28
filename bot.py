@@ -46,14 +46,6 @@ print("Preparing image creation.")
 image_creation = ImageCreation(resource_handler, resource_handler.user_data)
 
 print("Loading legend data")
-def update_legend_data() -> tuple[dict, datetime, NMF, np.ndarray]:
-    resource_handler.download_hero_list()
-    resource_handler.read_hero_list()
-    with open("data/legend_data.json", "r") as json_file:
-        legend_data = json.load(json_file)
-    nmf = NMF(n_components=4, init="nndsvd", random_state=42)
-    legend_vectors = np.asarray([vector for vector in legend_data["pick_vectors"].values()]) / 100.0
-    return legend_data, datetime.now(), nmf, nmf.fit_transform(legend_vectors)
 
 def get_legend_game_lengths():
     durations = legend_data["match_durations"]
@@ -67,7 +59,7 @@ def week_from_last_update(last_update:datetime) -> bool:
     return datetime.now() - last_update >= timedelta(days=7)
 
 user_data_update_time = datetime.now()
-legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
 legend_durations, legend_turns = get_legend_game_lengths()
 
 # Load banned users/discord servers
@@ -187,6 +179,7 @@ async def shitpost(ctx:discord.Interaction):
 async def name_autocomplete(ctx:discord.Interaction, current:str):
     data = []
     history = resource_handler.search_history.get_user_history(ctx.user.id)
+    history = [x for x in history if resource_handler.user_data.get_user(x.split("#")[0],x.split("#")[1]) is not None]
     # if nothing typed, recommend previous searches
     if len(current) == 0:
         for entry in history:
@@ -232,7 +225,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
     global user_data_update_time
     if week_from_last_update(user_data_update_time):
         resource_handler.initialise_data()
-        user_data_update_time = timedelta.now()
+        user_data_update_time = datetime.now()
     
     user_name_and_server = nickname.rsplit("#", 1)
     user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
@@ -274,7 +267,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
 
                         await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
                     if twelve_hours_from_last_update(legend_data_update_time):
-                        legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                        legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
                         legend_durations, legend_turns = get_legend_game_lengths()
                 else:
                     await ctx.followup.send('This player has not played enough games.')
@@ -288,7 +281,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
 @tree.command(name="ropinginfo", description="Gives information about the player's match length.")
 @app_commands.autocomplete(darkmode=darkmode_autocomplete)
 @app_commands.autocomplete(nickname=name_autocomplete)
-async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
+async def ropinginfo(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
     if darkmode == "off":
         darkmode = False
     else:
@@ -329,7 +322,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
 
                         await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
                     if twelve_hours_from_last_update(legend_data_update_time):
-                        legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                        legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
                         legend_durations, legend_turns = get_legend_game_lengths()
                 else:
                     await ctx.followup.send('This player has not played enough games.')
@@ -340,6 +333,60 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         else:
             await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
+
+@tree.command(name="warfareinfo", description="Gives information about the player's performance with different warfare rules.")
+@app_commands.autocomplete(nickname=name_autocomplete)
+async def warfareinfo(ctx:discord.Interaction, nickname:str):
+    
+    user_name_and_server = nickname.rsplit("#", 1)
+    user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
+    if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
+        await ctx.response.send_message('Just dm them for the free win, you should know how to do that right?')
+    else:
+        if user is not None:
+            try:
+                await ctx.response.defer()
+
+                matches = user.get_match_data(hero_list)
+                warfare_rules = [match.warfare_rule for match in matches.matches]
+                warfare_rule_counter = Counter(warfare_rules)
+                warfare_rules_win = [match.warfare_rule for match in matches.matches if match.win]
+                warfare_rule_win_counter = Counter(warfare_rules_win)
+                resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
+                user.points = int(matches.matches[0].points)
+                resource_handler.points.save_points()
+                resource_handler.search_history.add_search_query(ctx.user.id, nickname)
+                resource_handler.search_history.save_search_history()
+                    
+                global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
+                with io.BytesIO() as image_binary:
+
+                    response_text = f"""
+                    Warfare info for **{user.name.capitalize()} ({user.server})**
+                    
+                    **Offense**
+                    {warfare_rule_counter["Offense"]} games, {round((warfare_rule_win_counter["Offense"]+0.0001)/(warfare_rule_counter["Offense"]+0.0001)*100, 1)}% winrate
+                    
+                    **Defense**
+                    {warfare_rule_counter["Defense"]} games, {round((warfare_rule_win_counter["Defense"]+0.0001)/(warfare_rule_counter["Defense"]+0.0001)*100, 1)}% winrate
+                    
+                    **Support**
+                    {warfare_rule_counter["Support"]} games, {round((warfare_rule_win_counter["Support"]+0.0001)/(warfare_rule_counter["Support"]+0.0001)*100, 1)}% winrate
+                    
+                    **Resistance**
+                    {warfare_rule_counter["Resistance"]} games, {round((warfare_rule_win_counter["Resistance"]+0.0001)/(warfare_rule_counter["Resistance"]+0.0001)*100, 1)}% winrate
+                    """
+
+                    await ctx.followup.send(response_text)
+                if twelve_hours_from_last_update(legend_data_update_time):
+                    legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
+                    legend_durations, legend_turns = get_legend_game_lengths()
+            except Exception as e:
+                print(e)
+                await ctx.followup.send('This player has not played enough games.')
+
+        else:
+            await ctx.response.send_message('Player not found, have you tried typing better (and make sure to add server if not global)?')
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
     data = []
@@ -460,7 +507,7 @@ async def legendstats(ctx:discord.Interaction, darkmode:str="on"):
             await ctx.response.defer()
             global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
             if twelve_hours_from_last_update(legend_data_update_time):
-                legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
                 legend_durations, legend_turns = get_legend_game_lengths()
             image = image_creation.create_legend_data_summary_image(legend_data, darkmode)
             with io.BytesIO() as image_binary:
@@ -487,7 +534,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, hero:str, darkmode:str="
             await ctx.response.defer()
             global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
             if twelve_hours_from_last_update(legend_data_update_time):
-                legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
                 legend_durations, legend_turns = get_legend_game_lengths()
             target_hero = hero_list.get_hero_by_name(hero)
             image, success = image_creation.create_legend_data_image_one_hero(target_hero.code, target_hero.name, legend_data, darkmode)
@@ -520,7 +567,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
                 pick_vector = matches.get_pick_vector(hero_dict)
                 global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
                 if twelve_hours_from_last_update(legend_data_update_time):
-                    legend_data, legend_data_update_time, nmf, transformed_legend_picks = update_legend_data()
+                    legend_data, legend_data_update_time, nmf, transformed_legend_picks = resource_handler.update_legend_data()
                     legend_durations, legend_turns = get_legend_game_lengths()
                 legend_prebans = legend_data["individual_prebans"]
 

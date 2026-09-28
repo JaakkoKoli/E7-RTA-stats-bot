@@ -15,7 +15,13 @@ class Match:
     def __init__(self, match_data:object, hero_data:HeroList):
         self.picks_own:list[Pick] = []
         self.picks_enemy:list[Pick] = []
+        self.warfare_rules:dict = {"rta_openingrule_category_1": "Offense", 
+                                   "rta_openingrule_category_2": "Defense", 
+                                   "rta_openingrule_category_3": "Burn", 
+                                   "rta_openingrule_category_4": "Resistance", 
+                                   "rta_openingrule_category_5": "Support"}
         self.read_match_data(match_data, hero_data)
+        
         
     def read_match_data(self, match_data:object, hero_data:HeroList) -> None:
         self.match_id:int = int(match_data["battle_seq"])
@@ -37,6 +43,7 @@ class Match:
         self.rank_own:str = match_data["grade_code"]
         self.rank_enemy:str = match_data["enemy_grade_code"]
         self.server_enemy:str = match_data["enemy_world_code"].split("world_")[1]
+        self.warfare_rule:str = self.warfare_rules.get(match_data["opening_rule_title"], "Unknown")
     
     def get_own_picks_codes(self) -> list[str]:
         return [x.hero_code for x in self.picks_own]

@@ -280,11 +280,15 @@ class ImageCreation:
         rounded_durations = [int(round(dur/rounding_factor)*rounding_factor) for dur in match_durations]
         max_duration = max(rounded_durations)
         x = [i for i in range(0,800,rounding_factor)]
-        y = np.convolve([rounded_durations.count(i)+1 for i in x], [0.03, 0.05, 0.08, 0.15, 0.3, 0.15, 0.08, 0.05, 0.03], mode="same")
+        kernel = [0.03, 0.05, 0.08, 0.15, 0.3, 0.15, 0.08, 0.05, 0.03]
+        n = int((len(kernel) - 1)/2)
+        y = np.convolve([1]*n + [rounded_durations.count(i)+1 for i in x] + [1]*n, kernel, mode="valid")
+        y_lims = (min(y), max(y))
         plt.plot(x, y, textcol, linewidth=2, label="Match duration")
-        plt.plot(x, max(y)*np.convolve([(sum([match_result_vector[i] for i,val in enumerate(rounded_durations) if val==x_value])+winrate)/(rounded_durations.count(x_value)+1.0) for x_value in x], [0.03, 0.05, 0.08, 0.15, 0.3, 0.15, 0.08, 0.05, 0.03], mode="same"), "cyan", linewidth=2)
-        plt.plot(x, [max(y)*0.5]*len(x), "lime")
-        plt.plot([np.median(match_durations)]*2, [0,max(y)], "darkred")
+        winrate_y = np.convolve([winrate]*n + [(sum([match_result_vector[i] for i,val in enumerate(rounded_durations) if val==x_value])+winrate)/(rounded_durations.count(x_value)+1.0) for x_value in x] + [winrate]*n, kernel, mode="valid")
+        plt.plot(x, [y_lims[0] - 0.6 * (y_lims[1] - y_lims[0]) + 1.8 * (y_lims[1] - y_lims[0]) * i for i in winrate_y], "cyan", linewidth=2)
+        plt.plot(x, [y_lims[0] - 0.6 * (y_lims[1] - y_lims[0]) + 1.8 * (y_lims[1] - y_lims[0]) * 0.5]*len(x), "lime")
+        plt.plot([np.median(match_durations)]*2, [0,y_lims[1]], "darkred")
         plt.xlabel("Duration (s)")
         plt.yticks(None)
         #plt.plot(turn_amounts, [match_turns.count(match) for match in turn_amounts])

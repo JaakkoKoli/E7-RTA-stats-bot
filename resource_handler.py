@@ -6,13 +6,15 @@ from datetime import datetime, timedelta
 from PIL import Image
 import numpy as np
 import requests
+from sklearn.decomposition import NMF
 
 class ResourceHandler:
     def __init__(self, image_location:str="hero_images/", data_location:str="data/"):
         self.image_location:str = image_location
         self.data_location:str = data_location
         self.download_hero_list()
-        self.hero_list = self.read_hero_list()
+        self.hero_list = []
+        self.read_hero_list()
         self.image_codes = self.get_current_hero_image_codes()
         self.download_all_missing_hero_images()
         self.image_codes = self.get_current_hero_image_codes()
@@ -106,3 +108,29 @@ class ResourceHandler:
 
     def twelve_hours_from_last_update(self) -> bool:
         return datetime.now() - self.update_timestamp >= timedelta(hours=12)
+    
+    def update_legend_data(self) -> tuple[dict, datetime, NMF, np.ndarray]:
+        self.download_hero_list()
+        self.read_hero_list()
+        with open("data/legend_data.json", "r") as json_file:
+            legend_data = json.load(json_file)
+        pick_vectors = legend_data["pick_vectors"].values()
+        legend_data_hero_codes = legend_data["hero_code_list"]
+        hero_codes = self.hero_list.hero_code_list
+        if len(legend_data_hero_codes) < len(hero_codes):
+            new_locs = [0]*len(legend_data_hero_codes)
+            for i, code in enumerate(legend_data_hero_codes):
+                for i2, code2 in enumerate(hero_codes):
+                    if code == code2:
+                        new_locs[i] = i2
+            new_pick_vectors = []
+            for pick_vector in pick_vectors:
+                new_pick_vector = [0]*len(hero_codes)
+                for i, x in enumerate(pick_vector):
+                    new_pick_vector[new_locs[i]] = x
+                new_pick_vectors.append(new_pick_vector)
+            pick_vectors = new_pick_vectors
+        
+        nmf = NMF(n_components=4, init="nndsvd", random_state=42)
+        legend_vectors = np.asarray([vector for vector in pick_vectors]) / 100.0
+        return legend_data, datetime.now(), nmf, nmf.fit_transform(legend_vectors)

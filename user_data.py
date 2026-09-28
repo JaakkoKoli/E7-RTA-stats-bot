@@ -122,11 +122,13 @@ class UserData:
         return self.users[ind[" "][0]:(ind[" "][0]+ind[" "][1])]
 
     def get_user(self, user_name:str, server:str) -> User:
-        ind = self.user_lookup.get(user_name.lower()+"#"+server, 0)
+        ind = self.user_lookup.get(user_name.lower()+"#"+server, -1)
+        if ind == -1: return None
         return self.users[ind]
 
     def get_user_by_id(self, user_id:str, server:str) -> User:
-        ind = self.user_lookup_ind.get(f"{user_id}#{server}", 0)
+        ind = self.user_lookup_ind.get(f"{user_id}#{server}", -1)
+        if ind == -1: return None
         return self.users[ind]
 
     def get_user_ids_as_list(self) -> list[int]:
