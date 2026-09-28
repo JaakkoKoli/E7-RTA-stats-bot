@@ -19,7 +19,8 @@ class Match:
                                    "rta_openingrule_category_2": "Defense", 
                                    "rta_openingrule_category_3": "Burn", 
                                    "rta_openingrule_category_4": "Resistance", 
-                                   "rta_openingrule_category_5": "Support"}
+                                   "rta_openingrule_category_5": "Support",
+                                   "rta_openingrule_category_6": "Special"}
         self.read_match_data(match_data, hero_data)
         
         
