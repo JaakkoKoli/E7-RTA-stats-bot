@@ -122,6 +122,7 @@ class ImageCreation:
         matchups = matches.get_all_matchup_counts()
         matchups_wins = matches.get_all_matchup_win_counts()
         match_result_vector = matches.get_match_result_vector()
+        points_vector = [match.points_after_match for match in matches.matches]
         
         matchup_winrate = {}
         for hero_code in matchups.keys():
@@ -169,13 +170,24 @@ class ImageCreation:
         wr_graph = create_winrate_graph(match_result_vector)
         wr_min = int(math.floor(min(wr_graph)*20)/2)
         wr_max = int(math.ceil(max(wr_graph)*20)/2)
+        points_vector = np.convolve(points_vector, [0.333]*3, mode="valid")
+        points_max = max(points_vector)
+        points_min = min(points_vector)
+        mult = ((wr_max/10.0)-(wr_min/10.0))/(points_max-points_min)
+        point_graph = [(x - points_min)*mult + wr_min/10.0 for x in points_vector[-len(wr_graph):][::-1]]
         ax.plot(range(len(wr_graph)), wr_graph, color=textcol, lw=2)
+        ax.plot(range(len(wr_graph)), [((wr_max/10.0))]*len(wr_graph), color=textcol, lw=1, label="_nolegend_")
+        ax.plot(range(len(wr_graph)), [((wr_min/10.0))]*len(wr_graph), color=textcol, lw=1, label="_nolegend_")
         ax.plot(range(len(wr_graph)), [0.5]*len(wr_graph), color="red", lw=1)
-        ax.plot(range(len(wr_graph)), [((wr_max/10.0))]*len(wr_graph), color=textcol, lw=1)
-        ax.plot(range(len(wr_graph)), [((wr_min/10.0))]*len(wr_graph), color=textcol, lw=1)
+        ax.plot(range(len(wr_graph)), point_graph, color="blue", lw=1)
         ax2.text(0.9, 0.55, f"{wr_min*10}%", fontsize=16, color=textcol)
         ax2.text(0.9, 1.35, f"{wr_max*10}%", fontsize=16, color=textcol)
 
+        if darkmode:
+            plt.legend(["Winrate", "50% winrate", "Points"], facecolor="#313338", framealpha=0, labelcolor="white", fontsize=8)
+        else:
+            plt.legend(["Winrate", "50% winrate", "Points"], facecolor="#313338", framealpha=0, fontsize=8)
+        
         pos = ax.get_position()
         ax.set_position([pos.x0, pos.y0 + 0.09, pos.width, pos.height*0.9])
 

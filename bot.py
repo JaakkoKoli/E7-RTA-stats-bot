@@ -228,12 +228,12 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
         darkmode = False
     else:
         darkmode = True
-    
+
     global user_data_update_time
     if week_from_last_update(user_data_update_time):
         resource_handler.initialise_data()
         user_data_update_time = datetime.now()
-    
+
     user_name_and_server = nickname.rsplit("#", 1)
     user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
@@ -256,7 +256,7 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
                     resource_handler.points.save_points()
                     resource_handler.search_history.add_search_query(ctx.user.id, nickname)
                     resource_handler.search_history.save_search_history()
-                    
+
                     global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns, legend_turn_lengths
                     with io.BytesIO() as image_binary:
                         image.save(image_binary, 'PNG')
@@ -268,10 +268,10 @@ async def scout(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
                         Overall winrate: {round(100.0*sum(match_result_vector)/len(match_result_vector))}%
                         First pick winrate: {round(100.0*sum(first_pick_wins_vector)/sum(first_pick_vector))}%
                         Second pick winrate: {round(100.0*(sum(match_result_vector)-sum(first_pick_wins_vector))/(len(match_result_vector)-sum(first_pick_vector)))}%
-                        First pick in {sum(first_pick_vector)} of the last {len(match_result_vector)} matches 
+                        First pick in {sum(first_pick_vector)} of the last {len(match_result_vector)} matches
                         Average game: {int(turns)} turns / {round(durations/60,1)} minutes
                         Longest game: {max([match.turns for match in matches.matches])} turns / {round(max([match.duration_seconds for match in matches.matches])/60,1)} minutes
-                        Rope score: {max(0, min(100, round(50 + 50 * ((turn_lengths - legend_turn_lengths[0])/legend_turn_lengths[1] * 0.7 + (durations - legend_durations[0])/legend_durations[1] * 0.2 + (turns - legend_turns[0])/legend_turns[1] *0.1),1)))} / 100"""
+                        Rope score: {max(0, min(100, round(50 + 50 * ((turn_lengths - legend_turn_lengths[0])/legend_turn_lengths[1] * 0.6 + (durations - legend_durations[0])/legend_durations[1] * 0.3 + (turns - legend_turns[0])/legend_turns[1] *0.1),1)))} / 100"""
 
                         await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
                     if twelve_hours_from_last_update(legend_data_update_time):
@@ -310,13 +310,13 @@ async def ropinginfo(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
                     durations = np.median([match.duration_seconds for match in matches.matches])
                     turns = np.median([match.turns for match in matches.matches])
                     turn_lengths = np.median([match.duration_seconds/match.turns for match in matches.matches if match.turns!=0])
-                    
+
                     resource_handler.points.points[str(user.id)] = int(matches.matches[0].points)
                     user.points = int(matches.matches[0].points)
                     resource_handler.points.save_points()
                     resource_handler.search_history.add_search_query(ctx.user.id, nickname)
                     resource_handler.search_history.save_search_history()
-                    
+
                     global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns, legend_turn_lengths
                     with io.BytesIO() as image_binary:
                         image.save(image_binary, 'PNG')
@@ -329,7 +329,7 @@ async def ropinginfo(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
                         Average turn length: {round(np.mean([match.duration_seconds/match.turns for match in matches.matches if match.turns!=0]),1)} seconds
                         Average game duration: {int(turns)} turns / {round(durations/60,1)} minutes
                         Longest game: {max([match.turns for match in matches.matches])} turns / {round(max([match.duration_seconds for match in matches.matches])/60,1)} minutes
-                        Rope score: {max(0, min(100, round(50 + 50 * ((turn_lengths - legend_turn_lengths[0])/legend_turn_lengths[1] * 0.7 + (durations - legend_durations[0])/legend_durations[1] * 0.2 + (turns - legend_turns[0])/legend_turns[1] *0.1),1)))} / 100"""
+                        Rope score: {max(0, min(100, round(50 + 50 * ((turn_lengths - legend_turn_lengths[0])/legend_turn_lengths[1] * 0.6 + (durations - legend_durations[0])/legend_durations[1] * 0.3 + (turns - legend_turns[0])/legend_turns[1] *0.1),1)))} / 100"""
 
                         await ctx.followup.send(response_text, file=discord.File(fp=image_binary, filename='image.png'))
                     if twelve_hours_from_last_update(legend_data_update_time):
@@ -349,7 +349,7 @@ async def ropinginfo(ctx:discord.Interaction, nickname:str, darkmode:str="on"):
 @tree.command(name="warfareinfo", description="Gives information about the player's performance with different warfare rules.")
 @app_commands.autocomplete(nickname=name_autocomplete)
 async def warfareinfo(ctx:discord.Interaction, nickname:str):
-    
+
     user_name_and_server = nickname.rsplit("#", 1)
     user = resource_handler.user_data.get_user(user_name_and_server[0], user_name_and_server[1])
     if (str(ctx.user.id) in poobrain_set) or (str(ctx.guild.id) in pooguild_set):
@@ -370,22 +370,22 @@ async def warfareinfo(ctx:discord.Interaction, nickname:str):
                 resource_handler.search_history.add_search_query(ctx.user.id, nickname)
                 resource_handler.search_history.save_search_history()
                 rule_names = [key for key in warfare_rule_counter.keys() if warfare_rule_counter[key] > 0]
-                
+
                 global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns
                 with io.BytesIO() as image_binary:
 
                     response_text = f"""
                     Warfare info for **{user.name.capitalize()} ({user.server})**
-                    
+
                     **{str(rule_names[0]).capitalize()}**
                     {warfare_rule_counter[rule_names[0]]} games, {round((warfare_rule_win_counter[rule_names[0]]+0.0001)/(warfare_rule_counter[rule_names[0]]+0.0001)*100, 1)}% winrate
-                    
+
                     **{str(rule_names[1]).capitalize()}**
                     {warfare_rule_counter[rule_names[1]]} games, {round((warfare_rule_win_counter[rule_names[1]]+0.0001)/(warfare_rule_counter[rule_names[1]]+0.0001)*100, 1)}% winrate
-                    
+
                     **{str(rule_names[2]).capitalize()}**
                     {warfare_rule_counter[rule_names[2]]} games, {round((warfare_rule_win_counter[rule_names[2]]+0.0001)/(warfare_rule_counter[rule_names[2]]+0.0001)*100, 1)}% winrate
-                    
+
                     **{str(rule_names[3]).capitalize()}**
                     {warfare_rule_counter[rule_names[3]]} games, {round((warfare_rule_win_counter[rule_names[3]]+0.0001)/(warfare_rule_counter[rule_names[3]]+0.0001)*100, 1)}% winrate
                     """
@@ -403,7 +403,7 @@ async def warfareinfo(ctx:discord.Interaction, nickname:str):
 
 async def hero_autocomplete(ctx:discord.Interaction, current:str):
     data = []
-    search_results = hero_list.find_up_to_n_most_popular_by_name(current, 3, resource_handler.hero_popularity)
+    search_results = resource_handler.hero_list.find_up_to_n_most_popular_by_name(current, 3, resource_handler.hero_popularity)
     for hero in search_results:
        data.append(app_commands.Choice(name=hero.name, value=hero.name))
     return data
@@ -575,7 +575,7 @@ async def legend_data_one_hero(ctx:discord.Interaction, nickname:str):
             response = get_match_data_by_user_id(user.id, user.server)
             if response.status_code == 200:
                 match_list = response.json()["value"]["result_body"]["battle_list"]
-                matches = MatchHistory([Match(match, hero_list) for match in match_list])
+                matches = MatchHistory([Match(match, resource_handler.hero_list) for match in match_list])
                 prebans = {x[0]: x[1] for x in matches.get_all_own_preban_counts().most_common(3)}
                 pick_vector = matches.get_pick_vector(hero_dict)
                 global legend_data, legend_data_update_time, nmf, transformed_legend_picks, legend_durations, legend_turns

@@ -36,7 +36,7 @@ class Match:
         self.preban_own:list[str] = [hero_data.get_hero_by_code(x) for x in self.preban_own_codes]
         self.preban_enemy_codes:list[str] = [x for x in match_data["enemy_deck"]["preban_list"] if x!=""]
         self.preban_enemy:list[str] = [hero_data.get_hero_by_code(x) for x in self.preban_enemy_codes]
-        self.points = match_data["winScore"]
+        self.points:int = match_data["winScore"]
         self.win:bool = match_data["iswin"] == 1
         self.points_after_match:int = int(match_data["winScore"])
         self.turns:int = int(match_data["turn"])
